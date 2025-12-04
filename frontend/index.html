@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aayura - Malaria Outbreak Forecasting System">
+    <meta name="theme-color" content="#667eea">
+    <title>Aayura - Login</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="auth-container">
+            <div class="auth-card">
+                <!-- Header -->
+                <div class="auth-header">
+                    <h1 class="company-name">Aayura</h1>
+                    <h2 class="auth-title">Welcome Back</h2>
+                    <p class="auth-subtitle">Malaria Outbreak Forecasting System</p>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="auth-form" novalidate>
+                    <!-- Username Field -->
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            placeholder="Enter your username"
+                            required
+                            autocomplete="username"
+                        >
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            placeholder="Enter your password"
+                            required
+                            autocomplete="current-password"
+                        >
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="error-message" style="display: none;" role="alert"></div>
+
+                    <!-- Success Message -->
+                    <div id="successMessage" class="success-message" style="display: none;" role="status"></div>
+
+                    <!-- Login Button -->
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Login
+                    </button>
+                </form>
+
+                <!-- Footer Links -->
+                <div class="auth-footer">
+                    <p>First time user? <a href="signup.html" class="signup-link">Register here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="spinner" style="display: none;" role="status" aria-live="polite">
+        <div class="spinner-content"></div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✓ Login page loaded');
+            initializeLoginForm();
+        });
+    </script>
+</body>
+</html>

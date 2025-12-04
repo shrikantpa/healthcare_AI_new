@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aayura - Malaria Outbreak Forecasting System">
+    <title>Aayura - Main Interface</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .main-container {
+            display: flex;
+            height: 100vh;
+            gap: 0;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            padding: 12px 20px;
+            color: #333;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .nav-item:hover {
+            background: #f5f5f5;
+            border-left-color: #667eea;
+            color: #667eea;
+        }
+
+        .nav-item.active {
+            background: #f0f0ff;
+            border-left-color: #667eea;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .user-profile:hover {
+            background: #f5f5f5;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .user-info-small {
+            flex: 1;
+            font-size: 13px;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-role {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #333;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #e0e0e0;
+            color: #d32f2f;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            overflow: hidden;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 40px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: #333;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .location-badge {
+            background: #f0f0ff;
+            color: #667eea;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* Chat Area */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            display: flex;
+            gap: 15px;
+            animation: slideInUp 0.4s ease-out;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 15px;
+        }
+
+        .message.assistant .message-content {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .welcome-section {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .welcome-icon {
+            font-size: 60px;
+        }
+
+        .welcome-title {
+            font-size: 28px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .welcome-subtitle {
+            color: #999;
+            font-size: 15px;
+            max-width: 400px;
+        }
+
+        .forecast-card {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .forecast-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+
+        .forecast-data {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .data-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .data-label {
+            font-size: 12px;
+            color: #999;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .data-value {
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #d32f2f;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 3px solid #d32f2f;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #388e3c;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 3px solid #388e3c;
+        }
+
+        /* Scrollbar */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #ddd;
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">🔬 Aayura</div>
+            </div>
+
+            <div class="sidebar-nav">
+                <div class="nav-item active">📊 Forecast</div>
+                <div class="nav-item">📈 Analytics</div>
+                <div class="nav-item">🗺️ Map View</div>
+                <div class="nav-item">📋 Reports</div>
+                <div class="nav-item">⚙️ Settings</div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="avatarInitial">U</div>
+                    <div class="user-info-small">
+                        <div class="user-name" id="sidebarUsername">User</div>
+                        <div class="user-role" id="sidebarRole">Analyst</div>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header">
+                <h1>Malaria Outbreak Forecast</h1>
+                <div class="header-right">
+                    <div class="location-badge" id="locationBadge">📍 Loading...</div>
+                </div>
+            </div>
+
+            <!-- Chat Area -->
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Messages will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Update UI with user info
+            updateUserInfo(user);
+            
+            // Load and display forecast data
+            await loadForecastData(user);
+        });
+
+        function updateUserInfo(user) {
+            const userName = user.first_name ? `${user.first_name} ${user.last_name}` : user.username;
+            const userRole = user.role || 'Analyst';
+            const district = user.district || 'N/A';
+            const state = user.state || 'N/A';
+            
+            // Update sidebar
+            document.getElementById('sidebarUsername').textContent = userName;
+            document.getElementById('sidebarRole').textContent = userRole;
+            document.getElementById('avatarInitial').textContent = userName.charAt(0).toUpperCase();
+            
+            // Update location badge
+            document.getElementById('locationBadge').textContent = `📍 ${district}, ${state}`;
+        }
+
+        async function loadForecastData(user) {
+            const chatMessages = document.getElementById('chatMessages');
+            const district = user.district;
+            const state = user.state;
+
+            if (!district) {
+                chatMessages.innerHTML = `
+                    <div class="message assistant">
+                        <div class="message-content">
+                            <div class="error-message">
+                                ⚠️ No district information found. Please complete your profile.
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Show welcome message
+            chatMessages.innerHTML = `
+                <div class="message assistant">
+                    <div class="message-content">
+                        <div class="welcome-section">
+                            <div class="welcome-icon">🔬</div>
+                            <div class="welcome-title">Welcome to Aayura</div>
+                            <div class="welcome-subtitle">Malaria Outbreak Forecasting System</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="message assistant">
+                    <div class="message-content">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="loading-spinner"></div>
+                            <span>Fetching forecast data for ${district}, ${state}...</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            try {
+                // Call forecast API
+                console.log(`📍 Calling /forecast/district/${district}`);
+                const result = await makeApiCall(`/forecast/district/${district}`, 'GET');
+
+                console.log('📊 Forecast result:', result);
+
+                // Build response message with forecast data
+                let forecastHTML = `
+                    <div class="message assistant">
+                        <div class="message-content">
+                            <div class="forecast-card">
+                                <div class="forecast-title">📊 Forecast Results for ${district}</div>
+                `;
+
+                if (result.success && result.data) {
+                    const data = result.data;
+                    
+                    if (data.forecast) {
+                        forecastHTML += `
+                            <div class="forecast-data">
+                                <div class="data-item">
+                                    <div class="data-label">Status</div>
+                                    <div class="data-value">${data.status || 'Processing'}</div>
+                                </div>
+                                <div class="data-item">
+                                    <div class="data-label">District</div>
+                                    <div class="data-value">${data.district || district}</div>
+                                </div>
+                                <div class="data-item">
+                                    <div class="data-label">State</div>
+                                    <div class="data-value">${data.state || state}</div>
+                                </div>
+                            </div>
+                        `;
+
+                        // Display forecast details
+                        if (typeof data.forecast === 'string') {
+                            forecastHTML += `<div style="margin-top: 15px; padding: 10px; background: white; border-radius: 6px;">
+                                <strong>Forecast Analysis:</strong><br/>
+                                ${data.forecast}
+                            </div>`;
+                        } else if (typeof data.forecast === 'object') {
+                            forecastHTML += `<div style="margin-top: 15px; padding: 10px; background: white; border-radius: 6px;">
+                                <pre>${JSON.stringify(data.forecast, null, 2)}</pre>
+                            </div>`;
+                        }
+                    }
+
+                    if (data.message) {
+                        forecastHTML += `<div style="margin-top: 10px; font-style: italic; color: #666;">${data.message}</div>`;
+                    }
+                } else {
+                    forecastHTML += `
+                        <div class="error-message">
+                            ❌ ${result.data?.detail || 'Could not fetch forecast data'}
+                        </div>
+                    `;
+                }
+
+                forecastHTML += `
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                chatMessages.innerHTML = forecastHTML;
+
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            } catch (error) {
+                console.error('Error loading forecast:', error);
+                chatMessages.innerHTML += `
+                    <div class="message assistant">
+                        <div class="message-content">
+                            <div class="error-message">
+                                ⚠️ Error: ${error.message || 'Failed to load forecast data'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

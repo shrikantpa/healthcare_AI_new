@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aayura - Create Your Account">
+    <meta name="theme-color" content="#667eea">
+    <title>Aayura - Sign Up</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="auth-container">
+            <div class="auth-card auth-card-large">
+                <!-- Header -->
+                <div class="auth-header">
+                    <h1 class="company-name">Aayura</h1>
+                    <h2 class="auth-title">Create Account</h2>
+                    <p class="auth-subtitle">Join our forecasting system</p>
+                </div>
+
+                <!-- Signup Form -->
+                <form id="signupForm" class="auth-form" novalidate>
+                    <!-- First Name -->
+                    <div class="form-group">
+                        <label for="firstName">First Name</label>
+                        <input 
+                            type="text" 
+                            id="firstName" 
+                            name="firstName" 
+                            placeholder="Enter your first name"
+                            required
+                            autocomplete="given-name"
+                        >
+                    </div>
+
+                    <!-- Last Name -->
+                    <div class="form-group">
+                        <label for="lastName">Last Name</label>
+                        <input 
+                            type="text" 
+                            id="lastName" 
+                            name="lastName" 
+                            placeholder="Enter your last name"
+                            required
+                            autocomplete="family-name"
+                        >
+                    </div>
+
+                    <!-- State Dropdown -->
+                    <div class="form-group">
+                        <label for="state">Deputed State</label>
+                        <select id="state" name="state" required>
+                            <option value="">-- Select State --</option>
+                        </select>
+                    </div>
+
+                    <!-- District Dropdown -->
+                    <div class="form-group">
+                        <label for="district">Deputed Location (District)</label>
+                        <select id="district" name="district" required>
+                            <option value="">-- Select District --</option>
+                        </select>
+                    </div>
+
+                    <!-- Username -->
+                    <div class="form-group">
+                        <label for="signupUsername">Username</label>
+                        <input 
+                            type="text" 
+                            id="signupUsername" 
+                            name="username" 
+                            placeholder="Choose a username"
+                            required
+                            autocomplete="username"
+                        >
+                        <small id="usernameNote" class="form-note"></small>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-group">
+                        <label for="signupPassword">Password</label>
+                        <input 
+                            type="password" 
+                            id="signupPassword" 
+                            name="password" 
+                            placeholder="Enter password"
+                            required
+                            autocomplete="new-password"
+                            minlength="6"
+                        >
+                        <small class="form-note">At least 6 characters</small>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password</label>
+                        <input 
+                            type="password" 
+                            id="confirmPassword" 
+                            name="confirmPassword" 
+                            placeholder="Re-enter password"
+                            required
+                            autocomplete="new-password"
+                            minlength="6"
+                        >
+                        <small id="passwordMatch" class="form-note"></small>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="error-message" style="display: none;" role="alert"></div>
+
+                    <!-- Success Message -->
+                    <div id="successMessage" class="success-message" style="display: none;" role="status"></div>
+
+                    <!-- Sign Up Button -->
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Sign Up
+                    </button>
+                </form>
+
+                <!-- Login Link -->
+                <div class="auth-footer">
+                    <p>Already have an account? <a href="index.html" class="login-link">Login here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="spinner" style="display: none;" role="status" aria-live="polite">
+        <div class="spinner-content"></div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal" style="display: none;" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header success">
+                <h3>Success!</h3>
+            </div>
+            <div class="modal-body">
+                <p id="successText">Your profile has been created successfully! You can now login to your account.</p>
+            </div>
+            <div class="modal-footer">
+                <a href="index.html" class="btn btn-primary">Login Now</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✓ Signup page loaded');
+            initializeSignupForm();
+            loadLocationData();
+        });
+    </script>
+</body>
+</html>

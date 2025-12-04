@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aayura - Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .dashboard-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .dashboard-header {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            margin-bottom: 30px;
+        }
+
+        .dashboard-header h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .dashboard-header .logout-btn {
+            background-color: var(--error-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            float: right;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-header .logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .dashboard-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .user-info {
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .user-info p {
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .user-info strong {
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <h1>Welcome to Aayura!</h1>
+            <button class="logout-btn" onclick="handleLogout()">Logout</button>
+            <div style="clear: both;"></div>
+            <p id="greeting">Loading...</p>
+        </div>
+
+        <div class="dashboard-content">
+            <div class="user-info">
+                <h3>Your Profile</h3>
+                <div id="userDetails">Loading...</div>
+            </div>
+
+            <div>
+                <h3>Malaria Outbreak Forecasting System</h3>
+                <p>Welcome to the Aayura Healthcare Data Analytics platform. This system provides insights and forecasts for malaria outbreaks based on historical data and advanced AI models.</p>
+                <p>Use the menu to explore different features and generate forecasts for your assigned location.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('user'));
+            
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Set user info
+            const userDetails = document.getElementById('userDetails');
+            const greeting = document.getElementById('greeting');
+
+            if (user.user_id) {
+                greeting.textContent = `Hello, ${user.username}! Your role is: ${user.role}`;
+                userDetails.innerHTML = `
+                    <p><strong>User ID:</strong> ${user.user_id}</p>
+                    <p><strong>Username:</strong> ${user.username}</p>
+                    <p><strong>Role:</strong> ${user.role}</p>
+                `;
+            } else if (user.first_name) {
+                greeting.textContent = `Hello, ${user.first_name} ${user.last_name}!`;
+                userDetails.innerHTML = `
+                    <p><strong>Name:</strong> ${user.first_name} ${user.last_name}</p>
+                    <p><strong>Username:</strong> ${user.username}</p>
+                    <p><strong>District:</strong> ${user.district}</p>
+                    <p><strong>State:</strong> ${user.state}</p>
+                    <p><strong>Role:</strong> ${user.role}</p>
+                    <p><strong>Created:</strong> ${new Date(user.created_at).toLocaleDateString()}</p>
+                `;
+            }
+        });
+
+        function handleLogout() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
