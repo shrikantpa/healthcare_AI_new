@@ -85,10 +85,10 @@ function updateUserInfo() {
     document.getElementById('sidebarUsername').textContent = username;
     document.getElementById('sidebarRole').textContent = role;
     
-    const locationStr = currentLocation.district ? 
+    const locationDisplay = currentLocation.district ? 
         `📍 ${currentLocation.district}, ${currentLocation.state}` : 
         '📍 No location selected';
-    document.getElementById('sidebarLocation').innerHTML = locationStr;
+    document.getElementById('sidebarLocation').innerHTML = locationDisplay;
     
     console.log('✓ User info updated');
 }
