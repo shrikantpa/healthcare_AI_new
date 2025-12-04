@@ -259,11 +259,12 @@ async function handleLogin() {
             
             // Store user data in localStorage
             localStorage.setItem('user', JSON.stringify(result.data));
+            localStorage.setItem('userPassword', password);
             localStorage.setItem('token', result.data.username);
 
             showSuccess('✓ Login successful! Redirecting...');
             setTimeout(() => {
-                window.location.href = 'main.html';
+                window.location.href = 'chat.html';
             }, 1200);
         } else {
             const errorMsg = result.data.detail || 'Invalid username or password';
@@ -522,10 +523,29 @@ async function handleSignup() {
 
         if (result.success) {
             console.log('✓ Signup successful');
+            
+            // Store user data for auto-login
+            const userData = result.data;
+            localStorage.setItem('user', JSON.stringify({
+                user_id: userData.user_id,
+                username: userData.username,
+                role: userData.role
+            }));
+            localStorage.setItem('userPassword', password);
+            localStorage.setItem('userLocation', JSON.stringify({
+                district: userData.district,
+                state: userData.state
+            }));
+            
             // Show success modal
             showSuccessModal();
             // Reset form
             document.getElementById('signupForm').reset();
+            
+            // Redirect to chat after 2 seconds
+            setTimeout(() => {
+                window.location.href = 'chat.html';
+            }, 2000);
         } else {
             const errorMsg = result.data.detail || 'Signup failed';
             if (errorMsg.includes('already exists') || errorMsg.includes('duplicate')) {
