@@ -20,6 +20,15 @@ class DatabaseManager:
         self.cursor = self.conn.cursor()
         self.cursor.row_factory = sqlite3.Row
         
+    def drop_user_mapping_table(self):
+        """Drop the user_mapping table completely"""
+        try:
+            self.cursor.execute('DROP TABLE IF EXISTS user_mapping')
+            self.conn.commit()
+            print("✓ user_mapping table dropped successfully")
+        except Exception as e:
+            print(f"❌ Error dropping user_mapping table: {str(e)}")
+    
     def create_tables(self):
         """Create all required tables"""
         # Location table
@@ -131,24 +140,23 @@ class DatabaseManager:
         print(f"✓ Data loaded successfully")
         
     def add_default_users(self):
-        """Add default users to user_mapping table"""
-        default_users = [
-            ('admin', 'admin123', 'admin'),
-            ('user', 'user123', 'viewer'),
-            ('analyst', 'analyst123', 'analyst')
-        ]
-        
-        for username, password, role in default_users:
-            try:
+        """Add default admin user to user_mapping table"""
+        try:
+            # Check if admin user already exists
+            self.cursor.execute('SELECT * FROM user_mapping WHERE username = ?', ('admin',))
+            existing_admin = self.cursor.fetchone()
+            
+            if not existing_admin:
                 self.cursor.execute('''
                     INSERT INTO user_mapping (username, password, role)
                     VALUES (?, ?, ?)
-                ''', (username, password, role))
-            except sqlite3.IntegrityError:
-                pass
-        
-        self.conn.commit()
-        print("✓ Default users added")
+                ''', ('admin', 'admin123', 'ASHA'))
+                self.conn.commit()
+                print("✓ Default admin user added: username=admin, password=admin123, role=ASHA")
+            else:
+                print("✓ Admin user already exists in user_mapping table")
+        except sqlite3.IntegrityError as e:
+            print(f"⚠️ Admin user already exists: {str(e)}")
         
     def get_district_data(self, district: str, state: Optional[str] = None) -> Dict:
         """Get malaria data for a specific district"""
