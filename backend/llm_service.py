@@ -122,7 +122,7 @@ Based on this data, provide a malaria outbreak forecast in JSON format with the 
     },
     "total_expected_cases": <number>,
     "confidence_level": 0-1,
-    "recommendations": "<health awareness message>"
+    "recommendations": "<health awareness message>."
 }
 
 IMPORTANT: Return ONLY valid JSON, no additional text. The total_expected_cases should be based on the trend analysis.

@@ -86,6 +86,26 @@ class DatabaseManager:
             )
         ''')
         
+        # Service Requests table
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS service_requests (
+                request_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                username TEXT NOT NULL,
+                role TEXT NOT NULL,
+                district TEXT NOT NULL,
+                state TEXT NOT NULL,
+                request_item TEXT NOT NULL,
+                request_details TEXT,
+                status TEXT DEFAULT 'pending',
+                escalation_level INTEGER DEFAULT 0,
+                escalated_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+            )
+        ''')
+        
         self.conn.commit()
         print("✓ All tables created successfully")
         
