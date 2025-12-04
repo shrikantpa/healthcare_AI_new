@@ -59,6 +59,7 @@ class UserSignup(BaseModel):
     password: str
     district: str
     state: str
+    role: str
 
 class UserSignupResponse(BaseModel):
     user_id: int
@@ -139,7 +140,7 @@ async def signup(user_data: UserSignup):
     User signup endpoint with location validation
     
     Creates a new user profile after verifying that the provided district and state
-    exist in the location table. The user will be assigned the 'analyst' role.
+    exist in the location table. The user's role will be assigned based on the provided value.
     
     Args:
         user_data: UserSignup object with:
@@ -149,6 +150,7 @@ async def signup(user_data: UserSignup):
             - password: User's password
             - district: District name (must exist in location table)
             - state: State name (must match the district)
+            - role: User role (ASHA, DCMO, SCMO)
             
     Returns:
         UserSignupResponse with new user details if successful
@@ -156,10 +158,20 @@ async def signup(user_data: UserSignup):
     Raises:
         HTTPException 400: If district/state combination not found in location table
         HTTPException 400: If username already exists
+        HTTPException 400: If role is invalid
         HTTPException 500: If database error occurs
     """
     try:
-        logger.info(f"Signup request for user: {user_data.username}, location: {user_data.district}, {user_data.state}")
+        logger.info(f"Signup request for user: {user_data.username}, location: {user_data.district}, {user_data.state}, role: {user_data.role}")
+        
+        # Validate role
+        valid_roles = ['ASHA', 'DCMO', 'SCMO']
+        if user_data.role not in valid_roles:
+            logger.warning(f"Invalid role provided: {user_data.role}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid role. Must be one of: {', '.join(valid_roles)}"
+            )
         
         # Verify location exists
         location_id = db_manager.verify_location(user_data.district, user_data.state)
@@ -171,14 +183,15 @@ async def signup(user_data: UserSignup):
                 detail=f"Location not found: District '{user_data.district}' in State '{user_data.state}' does not exist in the system"
             )
         
-        # Create user
+        # Create user with role
         new_user = db_manager.create_user(
             first_name=user_data.first_name,
             last_name=user_data.last_name,
             username=user_data.username,
             password=user_data.password,
             district=user_data.district,
-            state=user_data.state
+            state=user_data.state,
+            role=user_data.role
         )
         
         if not new_user:
@@ -188,7 +201,7 @@ async def signup(user_data: UserSignup):
                 detail=f"Username '{user_data.username}' already exists or database error occurred"
             )
         
-        logger.info(f"User {user_data.username} created successfully")
+        logger.info(f"User {user_data.username} created successfully with role {user_data.role}")
         return UserSignupResponse(**new_user)
         
     except HTTPException as e:

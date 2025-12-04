@@ -445,6 +445,7 @@ async function handleSignup() {
     const lastName = document.getElementById('lastName').value.trim();
     const state = document.getElementById('state').value;
     const district = document.getElementById('district').value;
+    const role = document.getElementById('role').value;
     const username = document.getElementById('signupUsername').value.trim();
     const password = document.getElementById('signupPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
@@ -480,6 +481,11 @@ async function handleSignup() {
         return;
     }
 
+    if (!role) {
+        showError('Please select a role');
+        return;
+    }
+
     if (!username) {
         showError('Please enter a username');
         return;
@@ -511,6 +517,7 @@ async function handleSignup() {
             password,
             district,
             state,
+            role,
         });
 
         if (result.success) {
@@ -525,6 +532,8 @@ async function handleSignup() {
                 showError('❌ Username already exists. Please try a different username.');
             } else if (errorMsg.includes('does not exist') || errorMsg.includes('not found')) {
                 showError('❌ Invalid location selected. Please select a valid district and state.');
+            } else if (errorMsg.includes('Invalid role')) {
+                showError('❌ Invalid role selected. Please select a valid role.');
             } else {
                 showError('❌ ' + errorMsg);
             }

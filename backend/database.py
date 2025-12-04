@@ -234,7 +234,7 @@ class DatabaseManager:
         return result[0] if result else None
     
     def create_user(self, first_name: str, last_name: str, username: str, 
-                   password: str, district: str, state: str) -> Optional[Dict]:
+                   password: str, district: str, state: str, role: str = 'analyst') -> Optional[Dict]:
         """
         Create a new user after verifying location
         
@@ -245,6 +245,7 @@ class DatabaseManager:
             password: User's password
             district: District name (must exist in location table)
             state: State name (must match with district)
+            role: User role (ASHA, DCMO, SCMO, or analyst)
             
         Returns:
             Dict with user details if successful, None if location not found
@@ -261,7 +262,7 @@ class DatabaseManager:
                 INSERT INTO users 
                 (first_name, last_name, username, password, district, state, location_id, role)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (first_name, last_name, username, password, district, state, location_id, 'analyst'))
+            ''', (first_name, last_name, username, password, district, state, location_id, role))
             
             self.conn.commit()
             
