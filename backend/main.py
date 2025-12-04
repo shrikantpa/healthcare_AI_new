@@ -56,8 +56,11 @@ class UserLoginResponse(BaseModel):
     user_id: int
     username: str
     role: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     district: Optional[str] = None
     state: Optional[str] = None
+    created_at: Optional[str] = None
 
 class UserSignup(BaseModel):
     first_name: str
@@ -147,7 +150,7 @@ async def login(user: UserLogin):
         user: UserLogin object with username and password
         
     Returns:
-        UserLoginResponse with user details including location
+        UserLoginResponse with complete user details
     """
     try:
         # Verify user credentials from user_mapping
@@ -166,24 +169,31 @@ async def login(user: UserLogin):
         
         user_id, username, role = user_record[0], user_record[1], user_record[2]
         
-        # Try to get location data from users table
+        # Get complete user profile from users table
+        first_name = None
+        last_name = None
         district = None
         state = None
+        created_at = None
+        
         db_manager.cursor.execute(
-            'SELECT district, state FROM users WHERE username = ?',
+            'SELECT first_name, last_name, district, state, created_at FROM users WHERE username = ?',
             (username,)
         )
         user_profile = db_manager.cursor.fetchone()
         if user_profile:
-            district, state = user_profile[0], user_profile[1]
+            first_name, last_name, district, state, created_at = user_profile[0], user_profile[1], user_profile[2], user_profile[3], user_profile[4]
         
-        logger.info(f"User {username} logged in successfully")
+        logger.info(f"User {username} logged in successfully with role {role}")
         return UserLoginResponse(
             user_id=user_id,
             username=username,
             role=role,
+            first_name=first_name,
+            last_name=last_name,
             district=district,
-            state=state
+            state=state,
+            created_at=created_at
         )
     except HTTPException as e:
         raise e

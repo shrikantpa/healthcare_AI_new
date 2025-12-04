@@ -27,16 +27,16 @@ function initializeChat() {
         currentUser = JSON.parse(userStr);
         console.log('✓ User loaded:', currentUser);
         
-        // Get location from localStorage
-        const locationStr = localStorage.getItem('userLocation');
-        if (locationStr) {
-            try {
-                currentLocation = JSON.parse(locationStr);
-                console.log('✓ Location loaded:', currentLocation);
-            } catch (e) {
-                console.log('⚠️ Could not parse location data');
-                currentLocation = { district: null, state: null };
-            }
+        // Get location from user profile (set during login)
+        if (currentUser.district && currentUser.state) {
+            currentLocation = {
+                district: currentUser.district,
+                state: currentUser.state
+            };
+            console.log('✓ Location loaded from user profile:', currentLocation);
+        } else {
+            console.warn('⚠️ No location in user profile');
+            currentLocation = { district: null, state: null };
         }
         
         // Update user info in sidebar
@@ -48,11 +48,10 @@ function initializeChat() {
                 loadInitialGuidance();
             }, 500);
         } else {
-            // Show empty state and location prompt
+            // Show message if no location
             const chatContent = document.getElementById('chatContent');
             chatContent.innerHTML = '';
-            addSystemMessage('Welcome! Please select your location to generate guidance.');
-            showLocationPrompt();
+            addSystemMessage('Welcome! However, we need your location to generate guidance. Please update your profile.');
         }
         
     } catch (error) {
@@ -69,15 +68,12 @@ function updateUserInfo() {
     const role = currentUser.role || 'Unknown';
     const initial = username.charAt(0).toUpperCase();
     
-    // Get location from localStorage if available
-    const locationStr = localStorage.getItem('userLocation');
-    if (locationStr) {
-        try {
-            const location = JSON.parse(locationStr);
-            currentLocation = location;
-        } catch (e) {
-            console.log('No location data available');
-        }
+    // Get location from currentUser object (set during login)
+    if (currentUser.district && currentUser.state) {
+        currentLocation = {
+            district: currentUser.district,
+            state: currentUser.state
+        };
     }
     
     // Update DOM
@@ -87,7 +83,7 @@ function updateUserInfo() {
     
     const locationDisplay = currentLocation.district ? 
         `📍 ${currentLocation.district}, ${currentLocation.state}` : 
-        '📍 No location selected';
+        '📍 No location available';
     document.getElementById('sidebarLocation').innerHTML = locationDisplay;
     
     console.log('✓ User info updated');
@@ -103,56 +99,12 @@ async function loadInitialGuidance() {
     chatContent.innerHTML = '';
     
     if (!currentLocation.district || !currentLocation.state) {
-        addSystemMessage('Please select your location to generate guidance.');
-        showLocationPrompt();
+        addSystemMessage('Welcome! However, we need your location to generate guidance. Please update your profile.');
         return;
     }
     
     // Show loading and fetch guidance
     addSystemMessage('Fetching role-specific guidance for ' + currentLocation.district + ', ' + currentLocation.state + '...');
-    await fetchRoleBasedGuidance();
-}
-
-/**
- * Show location selection prompt
- */
-function showLocationPrompt() {
-    const chatContent = document.getElementById('chatContent');
-    
-    const prompt = document.createElement('div');
-    prompt.className = 'guidance-card';
-    prompt.innerHTML = `
-        <h3>📍 Select Your Location</h3>
-        <p>Please provide your district and state to receive accurate guidance:</p>
-        <div style="margin-top: 12px;">
-            <input type="text" id="districtInput" placeholder="Enter District" style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 6px;">
-            <input type="text" id="stateInput" placeholder="Enter State" style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 6px;">
-            <button onclick="setLocationAndLoadGuidance()" style="width: 100%; padding: 10px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px;">Load Guidance</button>
-        </div>
-    `;
-    
-    chatContent.appendChild(prompt);
-}
-
-/**
- * Set location and load guidance
- */
-async function setLocationAndLoadGuidance() {
-    const district = document.getElementById('districtInput')?.value?.trim();
-    const state = document.getElementById('stateInput')?.value?.trim();
-    
-    if (!district || !state) {
-        alert('Please enter both district and state');
-        return;
-    }
-    
-    currentLocation = { district, state };
-    localStorage.setItem('userLocation', JSON.stringify(currentLocation));
-    
-    // Clear chat and reload
-    document.getElementById('chatContent').innerHTML = '';
-    addSystemMessage('Fetching guidance for ' + district + ', ' + state + '...');
-    
     await fetchRoleBasedGuidance();
 }
 

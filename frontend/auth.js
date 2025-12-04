@@ -257,11 +257,16 @@ async function handleLogin() {
             console.log('✓ Login successful');
             console.log('👤 User data:', result.data);
             
-            // Store user data in localStorage
+            // Store complete user data in localStorage
             localStorage.setItem('user', JSON.stringify({
                 user_id: result.data.user_id,
                 username: result.data.username,
-                role: result.data.role
+                role: result.data.role,
+                first_name: result.data.first_name,
+                last_name: result.data.last_name,
+                district: result.data.district,
+                state: result.data.state,
+                created_at: result.data.created_at
             }));
             localStorage.setItem('userPassword', password);
             
