@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seeta Devi Chat Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            background: #f9f9f9;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #764ba2;
+        }
+        .log {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: #667eea; }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-left: 3px solid #667eea;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Seeta Devi Chat Flow Test</h1>
+        
+        <div class="test-section">
+            <h2>Test Steps</h2>
+            <div class="step">
+                <strong>Step 1:</strong> Verify backend is running on port 8000
+                <button onclick="testBackend()">Test Backend</button>
+                <div id="backend-log" class="log"></div>
+            </div>
+            
+            <div class="step">
+                <strong>Step 2:</strong> Test Seeta Devi login (username: seeta, password: 123456)
+                <button onclick="testLogin()">Test Login</button>
+                <div id="login-log" class="log"></div>
+            </div>
+            
+            <div class="step">
+                <strong>Step 3:</strong> Redirect to chat page and display user info
+                <button onclick="redirectToChat()">Go to Chat</button>
+            </div>
+            
+            <div class="step">
+                <strong>Step 4:</strong> Auto-send remedy message and get response
+                <button onclick="testChatFlow()">Test Chat (after redirecting)</button>
+                <div id="chat-log" class="log"></div>
+            </div>
+        </div>
+
+        <div class="test-section" id="iframe-section" style="display: none;">
+            <h2>Chat Interface Preview</h2>
+            <iframe id="chat-frame" src="chat.html"></iframe>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000';
+        const logs = {};
+
+        function log(section, message) {
+            console.log(`[${section}] ${message}`);
+            const logDiv = document.getElementById(`${section}-log`);
+            if (logDiv) {
+                const timestamp = new Date().toLocaleTimeString();
+                const color = message.includes('✓') ? 'success' : 
+                             message.includes('✗') || message.includes('❌') ? 'error' : 'info';
+                logDiv.innerHTML += `<div class="${color}">[${timestamp}] ${message}</div>`;
+                logDiv.scrollTop = logDiv.scrollHeight;
+            }
+        }
+
+        async function testBackend() {
+            log('backend', '🔍 Testing backend connection...');
+            try {
+                const response = await fetch(`${API_BASE_URL}/`);
+                const data = await response.json();
+                log('backend', `✓ Backend is running: ${data.message}`);
+                log('backend', `✓ Version: ${data.version}`);
+            } catch (error) {
+                log('backend', `✗ Backend error: ${error.message}`);
+            }
+        }
+
+        async function testLogin() {
+            log('login', '🔐 Testing Seeta Devi login...');
+            log('login', 'Username: seeta, Password: 123456');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: 'seeta',
+                        password: '123456'
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.user_id) {
+                    log('login', `✓ Login successful!`);
+                    log('login', `✓ User ID: ${data.user_id}`);
+                    log('login', `✓ Username: ${data.username}`);
+                    log('login', `✓ Role: ${data.role}`);
+                    log('login', `✓ First Name: ${data.first_name}`);
+                    log('login', `✓ Last Name: ${data.last_name}`);
+                    log('login', `✓ District: ${data.district}`);
+                    log('login', `✓ State: ${data.state}`);
+                    
+                    // Store for chat test
+                    localStorage.setItem('test_user_data', JSON.stringify({
+                        username: 'seeta',
+                        password: '123456',
+                        ...data
+                    }));
+                    
+                    log('login', `✓ User data stored in localStorage`);
+                } else {
+                    log('login', `✗ Login failed: ${JSON.stringify(data)}`);
+                }
+            } catch (error) {
+                log('login', `✗ Login error: ${error.message}`);
+            }
+        }
+
+        function redirectToChat() {
+            log('chat', '🔄 Redirecting to chat page...');
+            const userData = localStorage.getItem('test_user_data');
+            if (!userData) {
+                log('chat', '✗ No user data found. Please test login first.');
+                return;
+            }
+            
+            const user = JSON.parse(userData);
+            
+            // Store in localStorage as chat.js expects
+            localStorage.setItem('user', JSON.stringify({
+                user_id: user.user_id,
+                username: user.username,
+                role: user.role,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                district: user.district,
+                state: user.state,
+                created_at: user.created_at
+            }));
+            localStorage.setItem('userPassword', user.password);
+            localStorage.setItem('token', user.username);
+            
+            log('chat', '✓ User data stored in localStorage');
+            log('chat', '✓ Navigating to chat.html...');
+            
+            // Redirect to chat
+            window.location.href = 'chat.html';
+        }
+
+        async function testChatFlow() {
+            log('chat', '💬 Testing chat flow...');
+            const userData = localStorage.getItem('test_user_data');
+            if (!userData) {
+                log('chat', '✗ No user data found');
+                return;
+            }
+
+            const user = JSON.parse(userData);
+            log('chat', `✓ User loaded: ${user.first_name} ${user.last_name} (${user.role})`);
+            log('chat', `✓ Location: ${user.district}, ${user.state}`);
+
+            try {
+                log('chat', '📤 Sending guidance request...');
+                const response = await fetch(`${API_BASE_URL}/guidance`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: user.username,
+                        password: user.password,
+                        district: user.district,
+                        state: user.state
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    log('chat', `✓ Guidance received successfully`);
+                    log('chat', `✓ Role: ${data.role}`);
+                    log('chat', `✓ District: ${data.district}`);
+                    log('chat', `✓ Guidance message: ${data.message}`);
+                    
+                    if (data.guidance) {
+                        log('chat', `✓ Guidance content available`);
+                        
+                        // Display ASHA specific guidance
+                        if (data.role === 'ASHA' && data.guidance.general_remedies) {
+                            log('chat', `\n📋 ASHA Worker Guidance:`);
+                            log('chat', `\n🔹 General Remedies:\n${data.guidance.general_remedies}`);
+                            log('chat', `\n🔹 Social Remedies:\n${data.guidance.social_remedies}`);
+                            log('chat', `\n🔹 Government Actions:\n${data.guidance.govt_regulatory_actions}`);
+                            log('chat', `\n🔹 Healthcare Actions:\n${data.guidance.healthcare_body_actions}`);
+                        }
+                    }
+                } else {
+                    log('chat', `✗ Failed: ${data.message}`);
+                }
+            } catch (error) {
+                log('chat', `✗ Chat error: ${error.message}`);
+            }
+        }
+
+        // Initial test
+        log('backend', 'Test page loaded. Click buttons to run tests.');
+    </script>
+</body>
+</html>

@@ -420,13 +420,16 @@ async function sendMessage() {
     scrollToBottom();
     
     // Handle specific commands
-    if (message.toLowerCase().includes('guidance') || message.toLowerCase().includes('reload')) {
-        addSystemMessage('Reloading guidance...');
+    if (message.toLowerCase().includes('guidance') || message.toLowerCase().includes('reload') || 
+        message.toLowerCase().includes('remedy') || message.toLowerCase().includes('remedies') ||
+        message.toLowerCase().includes('action') || message.toLowerCase().includes('what') ||
+        message.toLowerCase().includes('suggest') || message.toLowerCase().includes('implement')) {
+        addSystemMessage('Fetching role-specific guidance and remedies...');
         await fetchRoleBasedGuidance();
     } else if (message.toLowerCase().includes('location') || message.toLowerCase().includes('change')) {
         showLocationPrompt();
     } else {
-        addAssistantMessage('I\'m here to help with outbreak guidance based on your role. Try asking for "guidance" to reload, or "change location" to update your location.');
+        addAssistantMessage('I\'m here to help with outbreak guidance based on your role. Try asking for "guidance", "remedies", "what actions", or ask me to "reload" for the latest information. You can also "change location" if needed.');
     }
 }
 
