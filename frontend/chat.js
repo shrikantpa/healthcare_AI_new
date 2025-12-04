@@ -27,13 +27,33 @@ function initializeChat() {
         currentUser = JSON.parse(userStr);
         console.log('✓ User loaded:', currentUser);
         
+        // Get location from localStorage
+        const locationStr = localStorage.getItem('userLocation');
+        if (locationStr) {
+            try {
+                currentLocation = JSON.parse(locationStr);
+                console.log('✓ Location loaded:', currentLocation);
+            } catch (e) {
+                console.log('⚠️ Could not parse location data');
+                currentLocation = { district: null, state: null };
+            }
+        }
+        
         // Update user info in sidebar
         updateUserInfo();
         
-        // Auto-load initial guidance
-        setTimeout(() => {
-            loadInitialGuidance();
-        }, 500);
+        // Auto-load initial guidance if location is available
+        if (currentLocation.district && currentLocation.state) {
+            setTimeout(() => {
+                loadInitialGuidance();
+            }, 500);
+        } else {
+            // Show empty state and location prompt
+            const chatContent = document.getElementById('chatContent');
+            chatContent.innerHTML = '';
+            addSystemMessage('Welcome! Please select your location to generate guidance.');
+            showLocationPrompt();
+        }
         
     } catch (error) {
         console.error('❌ Error parsing user data:', error);
@@ -82,32 +102,15 @@ async function loadInitialGuidance() {
     const chatContent = document.getElementById('chatContent');
     chatContent.innerHTML = '';
     
-    // Show welcome message
-    addSystemMessage('Fetching role-specific guidance based on your district data...');
-    
-    // Get user's district from signup (if available)
-    const userDataStr = localStorage.getItem('user');
-    let userDistrict = null;
-    let userState = null;
-    
-    if (userDataStr) {
-        try {
-            const userData = JSON.parse(userDataStr);
-            // Try to get district from user_mapping data
-            // For now, prompt the user to select location or use their profile location
-        } catch (e) {
-            console.error('Error parsing user data');
-        }
-    }
-    
-    // Check if we have district/state from localStorage
     if (!currentLocation.district || !currentLocation.state) {
         addSystemMessage('Please select your location to generate guidance.');
         showLocationPrompt();
-    } else {
-        // Auto-load guidance
-        await fetchRoleBasedGuidance();
+        return;
     }
+    
+    // Show loading and fetch guidance
+    addSystemMessage('Fetching role-specific guidance for ' + currentLocation.district + ', ' + currentLocation.state + '...');
+    await fetchRoleBasedGuidance();
 }
 
 /**

@@ -52,6 +52,13 @@ class UserResponse(BaseModel):
     username: str
     role: str
 
+class UserLoginResponse(BaseModel):
+    user_id: int
+    username: str
+    role: str
+    district: Optional[str] = None
+    state: Optional[str] = None
+
 class UserSignup(BaseModel):
     first_name: str
     last_name: str
@@ -131,7 +138,7 @@ async def root():
         "version": "1.0.0"
     }
 
-@app.post("/login", response_model=UserResponse, tags=["Authentication"])
+@app.post("/login", response_model=UserLoginResponse, tags=["Authentication"])
 async def login(user: UserLogin):
     """
     User login endpoint
@@ -140,15 +147,49 @@ async def login(user: UserLogin):
         user: UserLogin object with username and password
         
     Returns:
-        UserResponse with user details
+        UserLoginResponse with user details including location
     """
     try:
-        current_user = get_current_user(user.username, user.password)
-        logger.info(f"User {user.username} logged in successfully")
-        return current_user
+        # Verify user credentials from user_mapping
+        db_manager.cursor.execute(
+            'SELECT user_id, username, role FROM user_mapping WHERE username = ? AND password = ?',
+            (user.username, user.password)
+        )
+        user_record = db_manager.cursor.fetchone()
+        
+        if not user_record:
+            logger.warning(f"Failed login attempt for user {user.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid credentials"
+            )
+        
+        user_id, username, role = user_record[0], user_record[1], user_record[2]
+        
+        # Try to get location data from users table
+        district = None
+        state = None
+        db_manager.cursor.execute(
+            'SELECT district, state FROM users WHERE username = ?',
+            (username,)
+        )
+        user_profile = db_manager.cursor.fetchone()
+        if user_profile:
+            district, state = user_profile[0], user_profile[1]
+        
+        logger.info(f"User {username} logged in successfully")
+        return UserLoginResponse(
+            user_id=user_id,
+            username=username,
+            role=role,
+            district=district,
+            state=state
+        )
     except HTTPException as e:
-        logger.warning(f"Failed login attempt for user {user.username}")
         raise e
+    except Exception as e:
+        logger.error(f"Error during login: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error during login: {str(e)}")
 
 @app.post("/signup", response_model=UserSignupResponse, tags=["Authentication"])
 async def signup(user_data: UserSignup):

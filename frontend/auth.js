@@ -258,8 +258,22 @@ async function handleLogin() {
             console.log('👤 User data:', result.data);
             
             // Store user data in localStorage
-            localStorage.setItem('user', JSON.stringify(result.data));
+            localStorage.setItem('user', JSON.stringify({
+                user_id: result.data.user_id,
+                username: result.data.username,
+                role: result.data.role
+            }));
             localStorage.setItem('userPassword', password);
+            
+            // Store location data if available
+            if (result.data.district && result.data.state) {
+                localStorage.setItem('userLocation', JSON.stringify({
+                    district: result.data.district,
+                    state: result.data.state
+                }));
+                console.log('✓ Location data stored:', result.data.district, result.data.state);
+            }
+            
             localStorage.setItem('token', result.data.username);
 
             showSuccess('✓ Login successful! Redirecting...');
