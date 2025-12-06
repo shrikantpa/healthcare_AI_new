@@ -1,14 +1,15 @@
-
 """
-Single-file app: Streamlit UI + SQLite data layer for Aayura - Disease Outbreak Management
+Aayura - Disease Outbreak Management System
+Modern Streamlit UI with Beautiful Design + Backend API Integration
 Implements:
-  - Login/Signup (with location validation)
-  - Outbreak bootstrap (single AI message at bottom, non-blocking)
-  - Smooth chat (disables input while processing; no screen freeze)
-  - Sidebar: profile + inline Logout + service requests
+  - Modern login/signup with professional styling
+  - Real-time outbreak statistics display
+  - Chat interface with backend API integration
+  - Role-based action recommendations
+  - Service request management
 
 Run:
-    streamlit run app.py
+    streamlit run streamlit_app.py
 """
 
 import streamlit as st
@@ -18,20 +19,346 @@ from typing import List, Dict, Optional, Tuple
 from datetime import datetime
 import json
 import time
+import requests
+import re
+import json
+import ast
+import pandas as pd
+
+# Import constants
+from constants import TRANSLATIONS, COLORS, BACKEND_URL, get_text, translate_to_english, translate_api_response
+
+
+def inject_custom_css():
+    """Inject modern, beautiful custom CSS styling"""
+    st.markdown("""
+    <style>
+    /* Root color palette */
+    :root {
+        --primary-color: #2563eb;
+        --primary-dark: #1e40af;
+        --primary-light: #3b82f6;
+        --success-color: #10b981;
+        --warning-color: #f59e0b;
+        --danger-color: #ef4444;
+        --bg-dark: #0f172a;
+        --bg-light: #f8fafc;
+        --text-dark: #1e293b;
+        --text-light: #64748b;
+        --border-color: #e2e8f0;
+    }
+
+    /* General styling */
+    body, .main {
+        background-color: #fce4ec;
+    }
+
+    .stApp {
+        background: linear-gradient(135deg, #fce4ec 0%, #f8bbd0 100%);
+    }
+
+    /* Typography */
+    h1, h2, h3 {
+        color: #0f172a;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+    }
+
+    h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    h2 {
+        font-size: 1.875rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    p {
+        color: #475569;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+
+    /* Buttons */
+    .stButton > button {
+        background: #c084fc;
+        color: #000;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .stButton > button:hover {
+        background: #a855f7;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .stButton > button:active {
+        transform: translateY(0);
+    }
+
+    /* Input fields */
+    .stTextInput > div > div > input,
+    .stPasswordInput > div > div > input,
+    .stSelectbox > div > div > select,
+    .stTextArea > div > div > textarea {
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        color: #0f172a;
+    }
+
+    .stTextInput > div > div > input:focus,
+    .stPasswordInput > div > div > input:focus,
+    .stSelectbox > div > div > select:focus,
+    .stTextArea > div > div > textarea:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    /* Labels */
+    .stLabel {
+        color: #0f172a;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    /* Messages */
+    .stSuccess {
+        background-color: #ecfdf5;
+        border: 2px solid #10b981;
+        border-radius: 8px;
+        padding: 16px;
+    }
+
+    .stError {
+        background-color: #fef2f2;
+        border: 2px solid #ef4444;
+        border-radius: 8px;
+        padding: 16px;
+    }
+
+    .stWarning {
+        background-color: #fffbeb;
+        border: 2px solid #f59e0b;
+        border-radius: 8px;
+        padding: 16px;
+    }
+
+    .stInfo {
+        background-color: #eff6ff;
+        border: 2px solid #3b82f6;
+        border-radius: 8px;
+        padding: 16px;
+    }
+
+    /* Sidebar */
+    .stSidebar {
+        background: linear-gradient(180deg, #fce4ec 0%, #f8bbd0 100%);
+        color: #1f2937;
+    }
+
+    .stSidebar h3, .stSidebar p {
+        color: #1f2937;
+    }
+
+    /* Cards and containers */
+    .metric-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .metric-card:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-4px);
+    }
+
+    /* Chat styling */
+    .chat-message-user {
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        color: white;
+        padding: 14px 18px;
+        border-radius: 12px;
+        margin: 10px 0;
+        border-bottom-right-radius: 4px;
+        word-wrap: break-word;
+    }
+
+    .chat-message-ai {
+        background: #f1f5f9;
+        color: #0f172a;
+        padding: 14px 18px;
+        border-radius: 12px;
+        margin: 10px 0;
+        border-bottom-left-radius: 4px;
+        border-left: 4px solid #2563eb;
+    }
+
+    .chat-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        max-height: 70vh;
+        overflow-y: auto;
+        border: 1px solid #e2e8f0;
+    }
+
+    /* Dividers */
+    hr {
+        border-color: #e2e8f0;
+        margin: 20px 0;
+    }
+
+    /* Form containers */
+    .form-container {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        h1 {
+            font-size: 1.875rem;
+        }
+        h2 {
+            font-size: 1.5rem;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+# Inject CSS on page load
+inject_custom_css()
 
 # -----------------------------------------------------------------------------
 # Page config
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="Aayura - Disease Outbreak Management",
-    page_icon="🗃️",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
+
 # -----------------------------------------------------------------------------
-# Database Layer (merged from your database.py and upgraded)
+# API Client Utilities
 # -----------------------------------------------------------------------------
+class APIClient:
+    """Client for backend REST API calls"""
+
+    def __init__(self, base_url: str = BACKEND_URL):
+        self.base_url = base_url
+
+    def login(self, username: str, password: str) -> Dict:
+        """Login user and get profile"""
+        try:
+            response = requests.post(
+                f"{self.base_url}/login",
+                json={"username": username, "password": password},
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            st.error(f"Login failed: {str(e)}")
+            return None
+
+    def signup(self, first_name: str, last_name: str, username: str, password: str,
+               district: str, state: str, role: str) -> Dict:
+        """Create new user account"""
+        try:
+            response = requests.post(
+                f"{self.base_url}/signup",
+                json={
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "username": username,
+                    "password": password,
+                    "district": district,
+                    "state": state,
+                    "role": role
+                },
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            st.error(f"Signup failed: {str(e)}")
+            return None
+
+    def get_locations(self) -> List[Dict]:
+        """Get all available districts and states"""
+        try:
+            response = requests.get(
+                f"{self.base_url}/locations",
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            st.error(f"Failed to fetch locations: {str(e)}")
+            return []
+
+    def get_forecast(self, username: str, password: str, district: str, state: str) -> Dict:
+        """Get outbreak forecast for district"""
+        try:
+            response = requests.post(
+                f"{self.base_url}/forecast",
+                json={"district": district, "state": state},
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            st.error(f"Failed to get forecast: {str(e)}")
+            return None
+
+    def get_actions(self, username: str, password: str, question: Optional[str] = None) -> Dict:
+        """Get role-based actions from backend API"""
+        try:
+            response = requests.post(
+                f"{self.base_url}/action",
+                json={
+                    "username": username,
+                    "password": password,
+                    "question": question
+                },
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            st.error(f"Failed to get actions: {str(e)}")
+            return None
+
+
+# Initialize API client
+api_client = APIClient(BACKEND_URL)
+
+
+# Local database for service requests (still use SQLite for local storage)
 class DatabaseManager:
     def __init__(self, db_path: str = "MALERIA.db"):
         self.db_path = db_path
@@ -333,81 +660,219 @@ class DatabaseManager:
     def close(self):
         self.conn.close()
 
+
 # Instantiate DB and seed data
 db = DatabaseManager()
 db.add_default_users_and_data()
 
+
 # -----------------------------------------------------------------------------
-# Utility & Domain Logic (forecast/actions)
+# Utility & Domain Logic (API-driven)
 # -----------------------------------------------------------------------------
-def compute_outbreak_forecast(district_data: Dict) -> Optional[Dict]:
-    """Deterministic summary from available data; replaces LLM calls."""
-    if not district_data or not district_data.get('years'):
-        return None
-    latest = district_data['years'][0]
-    total_expected_cases = int(latest.get('cases_detected', 0)) + int(latest.get('cases_examined', 0) // 10)
-    forecast_by_gender = {
-        'male': int(latest.get('male_case_detected', 0)),
-        'female': int(latest.get('female_case_detected', 0)),
-    }
-    # simple split by age groups proportional to detected
-    det = int(latest.get('cases_detected', 0))
-    age_split = {
-        'children_0_5': int(det * 0.12),
-        'youth_5_18': int(det * 0.24),
-        'adults_18_60': int(det * 0.54),
-        'elderly_60_plus': int(det * 0.10),
-    }
-    return {
-        'status': 'potential_outbreak' if det > 100 else 'no_outbreak_observed',
-        'district': district_data.get('district'),
-        'state': district_data.get('state'),
-        'forecast': {
-            'outbreak_status': 'High' if det > 150 else ('Moderate' if det > 80 else 'Low'),
-            'disease': 'Malaria',
-            'total_expected_cases': total_expected_cases,
-            'forecast_by_gender': forecast_by_gender,
-            'forecast_by_age_group': age_split,
+
+def format_forecast_for_display(forecast: Dict) -> str:
+    """Format forecast data for display"""
+    if not forecast:
+        return "No forecast data available"
+
+    lines = []
+    lines.append(f"Status: {forecast.get('outbreak_status', 'Unknown').upper()}")
+    lines.append(f"Disease: {forecast.get('disease', 'Malaria')}")
+
+    if 'total_expected_cases' in forecast:
+        lines.append(f"Expected Cases: {forecast['total_expected_cases']}")
+
+    if 'forecast_by_gender' in forecast:
+        gender = forecast['forecast_by_gender']
+        lines.append(f"Male Cases: {gender.get('male', 0)}")
+        lines.append(f"Female Cases: {gender.get('female', 0)}")
+
+    if 'forecast_by_age_group' in forecast:
+        age = forecast['forecast_by_age_group']
+        lines.append(f"Children (0-5): {age.get('children_0_5', 0)}")
+        lines.append(f"Youth (5-18): {age.get('youth_5_18', 0)}")
+        lines.append(f"Adults (18-60): {age.get('adults_18_60', 0)}")
+        lines.append(f"Elderly (60+): {age.get('elderly_60_plus', 0)}")
+
+    return "\n".join(lines)
+
+
+def format_actions_for_display(actions: Dict, role: str) -> List[str]:
+    """Format actions/guidance from API for display"""
+    if not actions:
+        return ["No actions available"]
+
+    lines = []
+
+    if role == 'ASHA':
+        if 'general_remedies' in actions:
+            lines.append(f"Prevention: {actions['general_remedies']}")
+        if 'social_remedies' in actions:
+            lines.append(f"Community: {actions['social_remedies']}")
+        if 'govt_regulatory_actions' in actions:
+            lines.append(f"Government: {actions['govt_regulatory_actions']}")
+        if 'healthcare_body_actions' in actions:
+            lines.append(f"Healthcare: {actions['healthcare_body_actions']}")
+
+    elif role == 'DCMO':
+        if 'cases_identified' in actions:
+            lines.append(f"Cases: {actions['cases_identified']}")
+        if 'department_actions' in actions:
+            lines.append(f"Actions: {actions['department_actions']}")
+        if 'inventory_arrangements' in actions:
+            lines.append(f"Inventory: {actions['inventory_arrangements']}")
+        if 'resource_deployment' in actions:
+            lines.append(f"Resources: {actions['resource_deployment']}")
+        if 'coordination_plan' in actions:
+            lines.append(f"Coordination: {actions['coordination_plan']}")
+        if 'budget_allocation' in actions:
+            lines.append(f"Budget: {actions['budget_allocation']}")
+
+    elif role == 'SCMO':
+        if 'state_overview' in actions:
+            lines.append(f"Overview: {actions['state_overview']}")
+        if 'highly_affected_districts' in actions:
+            lines.append(f"Hotspots: {actions['highly_affected_districts']}")
+        if 'comparative_analysis' in actions:
+            lines.append(f"Analysis: {actions['comparative_analysis']}")
+        if 'state_level_remedies' in actions:
+            lines.append(f"Remedies: {actions['state_level_remedies']}")
+        if 'medical_professional_deployment' in actions:
+            lines.append(f"Medical: {actions['medical_professional_deployment']}")
+        if 'emergency_measures' in actions:
+            lines.append(f"Emergency: {actions['emergency_measures']}")
+        if 'inter_district_coordination' in actions:
+            lines.append(f"Coordination: {actions['inter_district_coordination']}")
+        if 'emergency_funding' in actions:
+            lines.append(f"Funding: {actions['emergency_funding']}")
+        if 'timeline_milestones' in actions:
+            lines.append(f"Timeline: {actions['timeline_milestones']}")
+
+    if not lines:
+        # Fallback: show all keys
+        lines = [f"{k}: {v}" for k, v in actions.items()]
+
+    return lines
+
+
+def parse_and_format_api_response(response_data):
+    """
+    Parse API response and return structured data with proper formatting.
+    Handles dictionaries, lists, tables, and charts.
+
+    Returns:
+        dict with keys:
+        - 'type': 'dict', 'list', 'table', 'chart', or 'text'
+        - 'data': formatted data for display
+        - 'html': HTML representation (if applicable)
+    """
+    if isinstance(response_data, str):
+        # Try to parse as JSON or dict
+        try:
+            # Try JSON first
+            parsed = json.loads(response_data)
+            response_data = parsed
+        except (json.JSONDecodeError, ValueError):
+            try:
+                # Try Python literal eval
+                parsed = ast.literal_eval(response_data)
+                response_data = parsed
+            except (ValueError, SyntaxError):
+                # Return as plain text
+                return {
+                    'type': 'text',
+                    'data': response_data,
+                    'html': response_data.replace('\n', '<br/>')
+                }
+
+    # Handle dictionary responses
+    if isinstance(response_data, dict):
+        # Check if it's a tabular structure (values are lists of equal length)
+        if all(isinstance(v, (list, tuple)) for v in response_data.values()):
+            # Check if all lists have same length (table-like)
+            lengths = [len(v) for v in response_data.values() if isinstance(v, (list, tuple))]
+            if lengths and len(set(lengths)) == 1 and lengths[0] > 0:
+                # This is a table
+                try:
+                    df = pd.DataFrame(response_data)
+                    return {
+                        'type': 'table',
+                        'data': df,
+                        'html': df.to_html(index=False, classes='table table-striped')
+                    }
+                except Exception as e:
+                    print(f"Error creating table: {e}")
+
+        # Format as key-value pairs with comma-separated values
+        formatted_html = "<div style='font-family: monospace; line-height: 1.8;'>"
+        formatted_text = []
+
+        for key, value in response_data.items():
+            # Format key as header
+            key_display = str(key).replace('_', ' ').title()
+
+            # Format value
+            if isinstance(value, (list, tuple)):
+                value_str = ', '.join(str(v) for v in value)
+            elif isinstance(value, dict):
+                value_str = '; '.join([f"{k}: {v}" for k, v in value.items()])
+            else:
+                value_str = str(value)
+
+            formatted_text.append(f"<strong>{key_display}:</strong> {value_str}")
+            formatted_html += f"<div style='margin-bottom: 8px;'><strong style='color: #c084fc;'>{key_display}:</strong> {value_str}</div>"
+
+        formatted_html += "</div>"
+
+        return {
+            'type': 'dict',
+            'data': formatted_text,
+            'html': formatted_html
         }
+
+    # Handle list responses
+    elif isinstance(response_data, list):
+        if len(response_data) > 0:
+            # Check if all items are dictionaries (tabular data)
+            if all(isinstance(item, dict) for item in response_data):
+                try:
+                    df = pd.DataFrame(response_data)
+                    return {
+                        'type': 'table',
+                        'data': df,
+                        'html': df.to_html(index=False, classes='table table-striped')
+                    }
+                except Exception as e:
+                    print(f"Error creating table from list: {e}")
+
+            # Regular list - format with bullet points
+            formatted_html = "<div style='line-height: 1.8;'>"
+            formatted_text = []
+            for item in response_data:
+                item_str = str(item)
+                formatted_text.append(item_str)
+                formatted_html += f"<div style='margin-bottom: 8px;'>• {item_str}</div>"
+            formatted_html += "</div>"
+
+            return {
+                'type': 'list',
+                'data': formatted_text,
+                'html': formatted_html
+            }
+        else:
+            return {
+                'type': 'text',
+                'data': 'No data available',
+                'html': 'No data available'
+            }
+
+    # Default: return as text
+    return {
+        'type': 'text',
+        'data': str(response_data),
+        'html': str(response_data).replace('\n', '<br/>')
     }
 
-def generate_role_actions(role: str, forecast: Dict, district: str, state: str, question: Optional[str] = None) -> List[str]:
-    """Format actions per role for chat display."""
-    if not forecast:
-        return ["No forecast data available."]
-    f = forecast
-    lines = []
-    if role == 'ASHA':
-        lines = [
-            f"General Remedies: Use mosquito nets, apply repellent, maintain hygiene.",
-            f"Social Measures: Organize community cleanups and awareness camps.",
-            f"Govt Actions: Conduct free medical camps and source inspections.",
-            f"Healthcare: Stock antimalarials, testing kits, ensure beds & staff."
-        ]
-    elif role == 'DCMO':
-        lines = [
-            f"Cases: {f.get('total_expected_cases', 'N/A')}",
-            f"Dept Actions: Activate district surveillance & testing centers.",
-            f"Inventory: Prepare doses/kits aligned to expected cases.",
-            f"Resources: Deploy doctors, nurses, paramedics across the district.",
-            f"Coordination: Work with local administration for compliance.",
-            f"Budget: Allocate emergency procurement funds."
-        ]
-    elif role == 'SCMO':
-        lines = [
-            "Overview: State-wide monitoring & rapid response.",
-            "Affected: Identify top high-risk districts from latest data.",
-            "Analysis: Compare infection rates district-wise.",
-            "Remedies: Launch state-level awareness & preventive drives.",
-            "Medical: Surge medical staff to hotspots.",
-            "Emergency: Stand up rapid testing & quarantine facilities.",
-            "Inter-District: Enable resource sharing between districts.",
-            "Funding: Sanction emergency funds.",
-            "Timeline: Week 1 assessment, Week 2-4 deployment."
-        ]
-    else:
-        lines = [json.dumps(f, indent=2)]
-    return lines
 
 # -----------------------------------------------------------------------------
 # Session State
@@ -426,14 +891,15 @@ if 'outbreak_loaded' not in st.session_state:
     st.session_state.outbreak_loaded = False
 if 'current_input' not in st.session_state:
     st.session_state.current_input = ""
-if 'service_requests' not in st.session_state:
-    st.session_state.service_requests = []
 if 'bootstrapping' not in st.session_state:
     st.session_state.bootstrapping = False
 if 'msg_processing' not in st.session_state:
     st.session_state.msg_processing = False
 if 'prefetched_requests' not in st.session_state:
     st.session_state.prefetched_requests = []
+if 'initial_forecast' not in st.session_state:
+    st.session_state.initial_forecast = None
+
 
 # -----------------------------------------------------------------------------
 # Helpers
@@ -441,42 +907,52 @@ if 'prefetched_requests' not in st.session_state:
 def get_user_initials(first_name: str, last_name: str) -> str:
     return f"{(first_name or '?')[0].upper()}{(last_name or '?')[0].upper()}"
 
+
 def bootstrap_user_session(user_obj: dict, password: str):
     """
     Prepare data BEFORE flipping logged_in to True:
-    - outreak forecast message
-    - prefetch service requests
-    - reset chat history with single AI message at bottom
+    - Get outbreak forecast from API
+    - Prefetch service requests
+    - Initialize chat with forecast data
     """
     st.session_state.bootstrapping = True
     try:
-        with st.spinner("Preparing your workspace..."):
-            district_data = db.get_district_data(user_obj.get('district', ''), user_obj.get('state', ''))
-            outbreak = compute_outbreak_forecast(district_data)
+        # Get forecast from API (no visible spinner to avoid fading)
+        forecast_response = api_client.get_forecast(
+            user_obj['username'],
+            password,
+            user_obj.get('district', ''),
+            user_obj.get('state', '')
+        )
 
-            st.session_state.chat_history = []
-            if outbreak and outbreak.get('forecast'):
-                f = outbreak['forecast']
-                ai_lines = [
-                    f"Outbreak Status: {f.get('outbreak_status', '').upper()}",
-                    f"Disease: {f.get('disease', 'Malaria')}",
-                    f"Total Cases: {f.get('total_expected_cases', 0)}",
-                    f"Male: {f.get('forecast_by_gender', {}).get('male', 0)}",
-                    f"Female: {f.get('forecast_by_gender', {}).get('female', 0)}",
-                    f"Children (0-5): {f.get('forecast_by_age_group', {}).get('children_0_5', 0)}",
-                    f"Youth (5-18): {f.get('forecast_by_age_group', {}).get('youth_5_18', 0)}",
-                    f"Adults (18-60): {f.get('forecast_by_age_group', {}).get('adults_18_60', 0)}",
-                    f"Elderly (60+): {f.get('forecast_by_age_group', {}).get('elderly_60_plus', 0)}",
-                ]
-                st.session_state.chat_history.append({'type': 'ai', 'content': ai_lines})
-            else:
-                st.session_state.chat_history.append({'type': 'ai', 'content': ["No outbreak data available at the moment."]})
+        st.session_state.chat_history = []
 
-            # Prefetch service requests
-            st.session_state.prefetched_requests = db.get_user_service_requests(user_obj['user_id'])
-            st.session_state.outbreak_loaded = True
+        if forecast_response and forecast_response.get('forecast'):
+            forecast = forecast_response['forecast']
+            # Translate forecast to selected language
+            lang = st.session_state.language if 'language' in st.session_state else 'hi'
+            forecast_text = format_forecast_for_display(forecast)
+            translated_forecast = translate_api_response(forecast_text, lang)
+            st.session_state.chat_history.append({
+                'type': 'ai',
+                'content': translated_forecast,
+                'is_forecast': True
+            })
+        else:
+            lang = st.session_state.language if 'language' in st.session_state else 'hi'
+            no_data_msg = get_text('no_data', lang)
+            st.session_state.chat_history.append({
+                'type': 'ai',
+                'content': no_data_msg,
+                'is_forecast': True
+            })
+
+        # Prefetch service requests
+        st.session_state.prefetched_requests = db.get_user_service_requests(user_obj['user_id'])
+        st.session_state.outbreak_loaded = True
     finally:
         st.session_state.bootstrapping = False
+
 
 # -----------------------------------------------------------------------------
 # Auth UI
@@ -488,28 +964,64 @@ def show_login():
         st.session_state['login_user'] = ""
     if 'login_pass' not in st.session_state:
         st.session_state['login_pass'] = ""
+    if 'language' not in st.session_state:
+        st.session_state.language = 'hi'  # Default to Hindi
+
+    lang = st.session_state.language
 
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown("## Aayura\n\nDisease Outbreak Forecasting & Management System")
-        st.markdown("### Login")
+        st.markdown(f"<h1 style='text-align: center;'>{get_text('app_name', lang)}</h1>", unsafe_allow_html=True)
+        st.markdown(
+            f"<p style='text-align: center; font-size: 1.1rem; color: #64748b;'>{get_text('app_subtitle', lang)}</p>",
+            unsafe_allow_html=True)
+        st.markdown(f"<h3 style='text-align: center;'>{get_text('welcome_back', lang)}</h3>", unsafe_allow_html=True)
 
         # Use existing session_state values as defaults (no post-instantiation writes)
         username = st.text_input(
-            "Username",
-            placeholder="Enter your username",
+            get_text('username', lang),
+            placeholder=get_text('username', lang),
             key="login_user"
         )
         password = st.text_input(
-            "Password",
+            get_text('password', lang),
             type="password",
-            placeholder="Enter your password",
+            placeholder=get_text('password', lang),
             key="login_pass"
         )
 
+        # Language selector below password
+        st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+        lang_options = {
+            'English': 'en',
+            'हिन्दी': 'hi',
+            'বাংলা': 'bn',
+            'தமிழ்': 'ta',
+        }
+        lang_display = list(lang_options.keys())
+        lang_values = list(lang_options.values())
+
+        # Find current index
+        current_idx = lang_values.index(lang) if lang in lang_values else 1  # Default to Hindi
+
+        selected_lang_display = st.selectbox(
+            get_text('select_language', lang),
+            lang_display,
+            index=current_idx,
+            key="login_lang_selector",
+            label_visibility="collapsed"
+        )
+        selected_lang_code = lang_options.get(selected_lang_display, 'hi')
+
+        if selected_lang_code != st.session_state.language:
+            st.session_state.language = selected_lang_code
+            st.rerun()
+
+        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+
         col_a, col_b = st.columns(2)
         with col_a:
-            if st.button("Login", use_container_width=True):
+            if st.button(get_text('login', lang), use_container_width=True):
                 if username and password:
                     user = db.get_user_by_credentials(username, password)
                     if user:
@@ -528,14 +1040,15 @@ def show_login():
                         # Just rerun to render the chat screen (login widgets won't be shown)
                         st.rerun()
                     else:
-                        st.error("Invalid credentials")
+                        st.error(get_text('invalid_credentials', lang))
                 else:
-                    st.warning("Please enter username and password")
+                    st.warning(get_text('please_enter_both', lang))
 
         with col_b:
-            if st.button("Sign Up", use_container_width=True):
+            if st.button(get_text('signup', lang), use_container_width=True):
                 st.session_state.show_signup = True
                 st.rerun()
+
 
 def show_signup():
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -559,7 +1072,8 @@ def show_signup():
         col_c, col_d = st.columns(2)
         with col_c:
             state = st.selectbox("State", states if states else ["No states available"])
-            districts = sorted(list(set([loc['district'] for loc in locations if loc['state'] == state]))) if state in [l['state'] for l in locations] else []
+            districts = sorted(list(set([loc['district'] for loc in locations if loc['state'] == state]))) if state in [
+                l['state'] for l in locations] else []
             district = st.selectbox("District", districts if districts else ["Select a state first"])
         with col_d:
             role = st.selectbox("Role", ["ASHA", "DCMO", "SCMO"])
@@ -594,69 +1108,67 @@ def show_signup():
         st.session_state.show_signup = False
         st.rerun()
 
+
 # -----------------------------------------------------------------------------
 # Chat UI
-# -----------------------------------------------------------------------------
 def process_chat_message():
     """
-    Process current input; disable input while calling actions; add AI message; clear input.
+    Process current input without screen fade.
+    Uses session state to flag that a message needs processing.
+    Callback function - cannot call st.rerun() directly.
+    Ensures all responses are in the user's selected language.
+    - Immediately displays user message
+    - Shows "Processing..." indicator without screen fade
+    - Translates API response to selected language BEFORE displaying
+    - No input/button disable during processing
     """
-    if st.session_state.msg_processing:
-        return
-
     user_input = (st.session_state.current_input or "").strip()
     if not user_input:
         return
 
+    user = st.session_state.user
+    lang = st.session_state.language
+
+    # Immediately add user message to show responsiveness
+    st.session_state.chat_history.append({'type': 'user', 'content': user_input})
+    st.session_state.current_input = ""
     st.session_state.msg_processing = True
-    try:
-        user = st.session_state.user
-        # add user message
-        st.session_state.chat_history.append({'type': 'user', 'content': user_input})
 
-        # derive actions from forecast for role
-        with st.spinner("Getting actions..."):
-            district_data = db.get_district_data(user.get('district', ''), user.get('state', ''))
-            outbreak = compute_outbreak_forecast(district_data)
-            forecast = outbreak.get('forecast') if outbreak else None
-            action_list = generate_role_actions(user.get('role', ''), forecast or {}, user.get('district', ''), user.get('state', ''), user_input)
-
-        # add ai message
-        st.session_state.chat_history.append({'type': 'ai', 'content': action_list})
-    finally:
-        st.session_state.current_input = ""
-        st.session_state.msg_processing = False
 
 def show_chat():
     user = st.session_state.user
+    lang = st.session_state.language
 
     # Sidebar with inline profile + logout
     with st.sidebar:
         initials = get_user_initials(user['first_name'], user['last_name'])
-        prof_col, logout_col = st.columns([5, 2])
-        with prof_col:
-            st.markdown(f"**{initials}** · {user.get('role','').upper()}")
-        with logout_col:
-            if st.button("Logout", use_container_width=True):
-                st.session_state.logged_in = False
-                st.session_state.user = None
-                st.session_state.password = None
-                st.session_state.chat_history = []
-                st.session_state.service_requests = []
-                st.session_state.prefetched_requests = []
-                st.session_state.outbreak_loaded = False
-                st.session_state.current_input = ""
-                st.session_state.msg_processing = False
-                st.rerun()
+        st.markdown(
+            f"<div style='background: #c084fc; padding: 12px; border-radius: 8px; text-align: center;'><span style='font-size: 1.5rem; font-weight: bold;'>{initials}</span><br/><span style='font-size: 0.9rem; color: #fff;'>{user.get('role', '').upper()}</span></div>",
+            unsafe_allow_html=True)
+        st.markdown("")
+        if st.button("🚪 " + get_text('logout', lang), use_container_width=True):
+            st.session_state.logged_in = False
+            st.session_state.user = None
+            st.session_state.password = None
+            st.session_state.chat_history = []
+            st.session_state.service_requests = []
+            st.session_state.prefetched_requests = []
+            st.session_state.outbreak_loaded = False
+            st.session_state.current_input = ""
+            st.session_state.msg_processing = False
+            st.session_state.language = 'hi'  # Reset to Hindi
+            st.rerun()
 
         st.markdown("---")
 
         # Service Request Form
-        st.markdown("### Click here for help")
+        st.markdown(f"### {get_text('service_requests', lang)}")
         with st.form("service_request_form"):
-            request_item = st.text_input("Request Item", placeholder="e.g., Medical Supplies, PPE")
-            request_details = st.text_area("Details", placeholder="Describe your request", height=80)
-            if st.form_submit_button("Submit Request", use_container_width=True):
+            request_item = st.text_input(get_text('request_item', lang),
+                                         placeholder=get_text('request_item_placeholder', lang))
+            request_details = st.text_area(get_text('request_details', lang),
+                                           placeholder=get_text('details_placeholder', lang), height=80)
+            if st.form_submit_button("📤 " + get_text('submit_request', lang), use_container_width=True):
                 if request_item and request_details:
                     req_id = db.submit_service_request(
                         user_id=user['user_id'],
@@ -670,14 +1182,13 @@ def show_chat():
                     st.success(f"Request #{req_id} submitted!")
                     # refresh pending requests list
                     st.session_state.prefetched_requests = db.get_user_service_requests(user['user_id'])
-                    st.rerun()
                 else:
-                    st.warning("Please fill all fields")
+                    st.warning(get_text('please_fill_fields', lang))
 
         st.markdown("---")
 
         # Pending Requests
-        st.markdown("### Pending Requests")
+        st.markdown(f"### {get_text('pending_requests', lang)}")
         requests = st.session_state.prefetched_requests
         if requests:
             any_pending = False
@@ -686,38 +1197,67 @@ def show_chat():
                     any_pending = True
                     with st.container(border=True):
                         st.markdown(f"**#{req['request_id']}**: {req['request_item']}")
-                        st.markdown(f"Level: {req['escalation_level']}/3")
+                        st.markdown(f"{get_text('level', lang)}: {req['escalation_level']}/3")
                         if req['escalation_level'] < 3:
-                            if st.button("Escalate", key=f"escalate_btn_{req['request_id']}", use_container_width=True):
+                            if st.button(get_text('escalate', lang), key=f"escalate_btn_{req['request_id']}",
+                                         use_container_width=True):
                                 ok, new_level = db.escalate_request(req['request_id'], user['user_id'])
                                 if ok:
-                                    st.success(f"Request escalated to level {new_level}")
+                                    st.success(f"{get_text('escalated_to_level', lang)} {new_level}")
                                     st.session_state.prefetched_requests = db.get_user_service_requests(user['user_id'])
-                                    st.rerun()
                                 else:
-                                    st.error("Unable to escalate request.")
+                                    st.error(get_text('unable_to_escalate', lang))
             if not any_pending:
-                st.info("No pending requests")
+                st.info(get_text('no_pending_requests', lang))
         else:
-            st.info("No pending requests")
+            st.info(get_text('no_pending_requests', lang))
 
     # Main content area
-    st.markdown("## Aayura - Chat")
+    st.markdown("<h2 style='text-align: center;'>Aayura - Chat</h2>", unsafe_allow_html=True)
 
-    # Display chat history (single AI outbreak message was added during bootstrap)
-    st.markdown("")
-    for message in st.session_state.chat_history:
-        if message['type'] == 'user':
-            st.markdown(f"**You:**\n\n{message['content']}")
-        elif message['type'] == 'ai':
-            actions = message['content']
-            actions_html = "\n".join([f"• {a}" for a in actions]) if isinstance(actions, list) else str(actions)
-            st.markdown(f"**Aayura:**\n\n{actions_html}")
+    # Chat container
+    with st.container():
+        # Display chat history (single AI outbreak message was added during bootstrap)
         st.markdown("")
+        for message in st.session_state.chat_history:
+            if message['type'] == 'user':
+                st.markdown(
+                    f"<div style='background: #d1fae5; padding: 12px; border-radius: 8px; margin: 10px 0;'><b>You:</b><br/>{message['content']}</div>",
+                    unsafe_allow_html=True)
+            elif message['type'] == 'ai':
+                actions = message['content']
+
+                # Parse and format the response
+                formatted = parse_and_format_api_response(actions)
+
+                # Display based on type
+                if formatted['type'] == 'table':
+                    # Display table
+                    st.markdown(
+                        "<div style='background: #e5e7eb; padding: 12px; border-radius: 8px; margin: 10px 0;'><b>Aayura AI:</b></div>",
+                        unsafe_allow_html=True)
+                    st.dataframe(formatted['data'], use_container_width=True)
+                elif formatted['type'] == 'dict':
+                    # Display formatted dictionary
+                    st.markdown(
+                        f"<div style='background: #e5e7eb; padding: 12px; border-radius: 8px; margin: 10px 0;'><b>Aayura AI:</b><br/>{formatted['html']}</div>",
+                        unsafe_allow_html=True)
+                elif formatted['type'] == 'list':
+                    # Display formatted list
+                    st.markdown(
+                        f"<div style='background: #e5e7eb; padding: 12px; border-radius: 8px; margin: 10px 0;'><b>Aayura AI:</b><br/>{formatted['html']}</div>",
+                        unsafe_allow_html=True)
+                else:
+                    # Display as text
+                    actions_html = str(actions).replace('\n', '<br/>')
+                    st.markdown(
+                        f"<div style='background: #e5e7eb; padding: 12px; border-radius: 8px; margin: 10px 0;'><b>Aayura AI:</b><br/>{actions_html}</div>",
+                        unsafe_allow_html=True)
+            st.markdown("")
 
     st.markdown("---")
 
-    # Input row - disabled while processing
+    # Input row - always enabled (no fade effect)
     col_msg, col_btn = st.columns([5, 1], gap="small")
     with col_msg:
         st.text_input(
@@ -725,16 +1265,63 @@ def show_chat():
             placeholder="e.g., What remedies should I recommend?",
             key="current_input",
             label_visibility="collapsed",
-            disabled=st.session_state.msg_processing,
         )
     with col_btn:
         st.button(
-            "Send",
+            "📤",
             use_container_width=True,
             on_click=process_chat_message,
             key="send_btn_callback",
-            disabled=st.session_state.msg_processing,
         )
+
+    # Process API call if message was just added
+    if st.session_state.msg_processing:
+        st.markdown(
+            "<div style='background: #fff9c4; padding: 12px; border-radius: 8px; margin: 10px 0; text-align: center;'>"
+            "<b>🔄 Processing your request...</b></div>",
+            unsafe_allow_html=True
+        )
+
+        user = st.session_state.user
+        lang = st.session_state.language
+
+        try:
+            # Call API to get actions using the last user message
+            user_message = st.session_state.chat_history[-1]['content']
+            api_response = api_client.get_actions(user.get('username', ''), st.session_state.password, user_message)
+
+            # Process response with STRICT translation requirement
+            if api_response and api_response.get('actions'):
+                # Get the raw API response text
+                action_text = str(api_response.get('actions', ''))
+
+                # STRICT: Translate API response to selected language BEFORE processing
+                translated_action = translate_api_response(action_text, lang)
+
+                # Split and clean the translated response
+                action_list = [line.strip() for line in translated_action.split('\n') if line.strip()]
+
+                # If still empty after splitting, provide translated default message
+                if not action_list:
+                    action_list = [get_text('no_actions', lang)]
+            else:
+                # No response from API - provide translated error message
+                action_list = [get_text('unable_to_generate', lang)]
+
+            # Add AI message with translated content
+            st.session_state.chat_history.append({'type': 'ai', 'content': action_list})
+
+        except Exception as e:
+            # Handle error gracefully
+            st.session_state.chat_history.append({
+                'type': 'ai',
+                'content': [get_text('unable_to_generate', lang)]
+            })
+        finally:
+            # Reset processing flag and rerun to display response
+            st.session_state.msg_processing = False
+            st.rerun()
+
 
 # -----------------------------------------------------------------------------
 # App Router
