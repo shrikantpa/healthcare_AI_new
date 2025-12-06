@@ -53,7 +53,6 @@ class UserResponse(BaseModel):
     role: str
 
 class UserLoginResponse(BaseModel):
-    user_id: int
     username: str
     role: str
     first_name: Optional[str] = None
@@ -61,6 +60,7 @@ class UserLoginResponse(BaseModel):
     district: Optional[str] = None
     state: Optional[str] = None
     created_at: Optional[str] = None
+    password: Optional[str] = None
 
 class UserSignup(BaseModel):
     first_name: str
@@ -165,7 +165,7 @@ class EscalateServiceRequestResponse(BaseModel):
 def get_current_user(username: str, password: str) -> UserResponse:
     """Verify user credentials"""
     db_manager.cursor.execute(
-        'SELECT user_id, username, role FROM user_mapping WHERE username = ? AND password = ?',
+        'SELECT user_id, username, role FROM users WHERE username = ? AND password = ?',
         (username, password)
     )
     user = db_manager.cursor.fetchone()
@@ -201,47 +201,31 @@ async def login(user: UserLogin):
         UserLoginResponse with complete user details
     """
     try:
-        # Verify user credentials from user_mapping
-        db_manager.cursor.execute(
-            'SELECT user_id, username, role FROM user_mapping WHERE username = ? AND password = ?',
-            (user.username, user.password)
-        )
-        user_record = db_manager.cursor.fetchone()
-        
-        if not user_record:
-            logger.warning(f"Failed login attempt for user {user.username}")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials"
-            )
-        
-        user_id, username, role = user_record[0], user_record[1], user_record[2]
-        
-        # Get complete user profile from users table
+        username = user.username
         first_name = None
         last_name = None
         district = None
         state = None
         created_at = None
-        
         db_manager.cursor.execute(
-            'SELECT first_name, last_name, district, state, created_at FROM users WHERE username = ?',
+            'SELECT first_name, last_name, district, state, role, created_at FROM users WHERE username = ?',
             (username,)
         )
         user_profile = db_manager.cursor.fetchone()
         if user_profile:
-            first_name, last_name, district, state, created_at = user_profile[0], user_profile[1], user_profile[2], user_profile[3], user_profile[4]
+            first_name, last_name, district, state, role, created_at = user_profile[0], user_profile[1], user_profile[2], user_profile[3], user_profile[4], user_profile[5]
         
         logger.info(f"User {username} logged in successfully with role {role}")
         return UserLoginResponse(
-            user_id=user_id,
+            user_id = 1,
             username=username,
             role=role,
             first_name=first_name,
             last_name=last_name,
             district=district,
             state=state,
-            created_at=created_at
+            created_at=created_at,
+            password=user.password
         )
     except HTTPException as e:
         raise e
@@ -444,7 +428,7 @@ async def get_role_based_guidance(request: RoleBasedGuidanceRequest):
         
         # Authenticate user
         db_manager.cursor.execute(
-            'SELECT user_id, username, role FROM user_mapping WHERE username = ? AND password = ?',
+            'SELECT user_id, username, role FROM users WHERE username = ? AND password = ?',
             (request.username, request.password)
         )
         user = db_manager.cursor.fetchone()
@@ -666,7 +650,7 @@ You are DCMO (District Medical Officer) for {district}, {state}.
 
 Cases Expected: {total_cases} (Male: {male_cases}, Female: {female_cases})
 
-Generate CONCISE district-level action plan in 6 categories (keep each under 30 words):
+Generate CONCISE district-level action plan in 6 categories (keep each under 100 words):
 
 {{
     "cases_identified": "Current count: {total_cases}",
@@ -711,7 +695,7 @@ def _generate_scmo_actions(forecast: dict, district: str, state: str, question: 
         prompt = f"""
 You are SCMO (State Medical Officer) for {state}.
 
-Generate CONCISE state-level strategic response in 9 categories (select any top-5 most relevant, keep each under 40 words  ):
+Generate CONCISE state-level strategic response in 9 categories (select any top-5 most relevant, keep each under 100 words  ):
 
 {{
     "state_overview": "Overall outbreak status across the state",
@@ -982,7 +966,7 @@ async def check_outbreak(request: OutbreakCheckRequest):
         
         # Authenticate user
         db_manager.cursor.execute(
-            'SELECT user_id, username, role FROM user_mapping WHERE username = ? AND password = ?',
+            'SELECT user_id, username, role FROM users WHERE username = ? AND password = ?',
             (request.username, request.password)
         )
         user = db_manager.cursor.fetchone()
@@ -1021,10 +1005,9 @@ async def check_outbreak(request: OutbreakCheckRequest):
             )
         
         # Generate forecast (includes counts only, no guidance)
-        forecast_result = llm_service.generate_outbreak_forecast(district_data)
+        forecast_result = llm_service.generate_outbreak_forecast_number(district_data)
         
         outbreak_detected = forecast_result.get('status') != 'no_outbreak_observed'
-        
         return OutbreakCheckResponse(
             status="success",
             username=username,
@@ -1084,7 +1067,7 @@ async def get_actions(request: ActionRequest):
         
         # Authenticate user
         db_manager.cursor.execute(
-            'SELECT user_id, username, role FROM user_mapping WHERE username = ? AND password = ?',
+            'SELECT user_id, username, role FROM users WHERE username = ? AND password = ?',
             (request.username, request.password)
         )
         user = db_manager.cursor.fetchone()
@@ -1169,7 +1152,7 @@ async def submit_service_request(username: str, password: str, request: ServiceR
     try:
         # Authenticate user
         db_manager.cursor.execute(
-            'SELECT user_id, username, role FROM user_mapping WHERE username = ? AND password = ?',
+            'SELECT user_id, username, role FROM users WHERE username = ? AND password = ?',
             (username, password)
         )
         user = db_manager.cursor.fetchone()
@@ -1225,7 +1208,7 @@ async def get_service_requests(username: str, password: str):
     try:
         # Authenticate user
         db_manager.cursor.execute(
-            'SELECT user_id, username FROM user_mapping WHERE username = ? AND password = ?',
+            'SELECT user_id, username FROM users WHERE username = ? AND password = ?',
             (username, password)
         )
         user = db_manager.cursor.fetchone()
@@ -1286,7 +1269,7 @@ async def escalate_service_request(username: str, password: str, request_id: int
     try:
         # Authenticate user
         db_manager.cursor.execute(
-            'SELECT user_id FROM user_mapping WHERE username = ? AND password = ?',
+            'SELECT user_id FROM users WHERE username = ? AND password = ?',
             (username, password)
         )
         user = db_manager.cursor.fetchone()

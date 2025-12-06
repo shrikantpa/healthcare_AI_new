@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import List, Dict, Optional
 
 class DatabaseManager:
-    def __init__(self, db_path: str = "malaria_data.db"):
+    def __init__(self, db_path: str = "MALERIA.db"):
         """Initialize database connection"""
         self.db_path = db_path
         self.conn = None
@@ -35,7 +35,7 @@ class DatabaseManager:
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS location (
                 location_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                state TEXT UNIQUE NOT NULL,
+                state TEXT NOT NULL,
                 district TEXT NOT NULL,
                 UNIQUE(state, district)
             )
@@ -79,7 +79,7 @@ class DatabaseManager:
                 district TEXT NOT NULL,
                 state TEXT NOT NULL,
                 location_id INTEGER NOT NULL,
-                role TEXT DEFAULT 'analyst',
+                role TEXT ,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (location_id) REFERENCES location(location_id),
                 UNIQUE(username)
@@ -115,66 +115,97 @@ class DatabaseManager:
             data = json.load(f)
         
         print(f"Loading {len(data)} records from {json_path}...")
-        
+        counter = 0
         for record in data:
+            counter+=1
             state = record.get('state', 'Unknown')
             district = record.get('district', 'Unknown')
-            
-            # Insert into location table
-            self.cursor.execute('''
-                INSERT OR IGNORE INTO location (state, district)
-                VALUES (?, ?)
-            ''', (state, district))
-            
-            # Get location_id
-            self.cursor.execute('''
+
+            # Check if location already exists
+            self.cursor.execute(
+                '''
                 SELECT location_id FROM location WHERE state = ? AND district = ?
-            ''', (state, district))
+                ''',
+                (state, district)
+            )
             location = self.cursor.fetchone()
-            location_id = location[0] if location else None
-            
+            if not location:
+                self.cursor.execute(
+                    '''
+                    INSERT INTO location (state, district)
+                    VALUES (?, ?)
+                    ''',
+                    (state, district)
+                )
+
+                # Fetch the newly created location_id
+                self.cursor.execute(
+                    '''
+                    SELECT location_id FROM location WHERE state = ? AND district = ?
+                    ''',
+                    (state, district)
+                )
+                location = self.cursor.fetchone()
+            location_id = location[0]
             if location_id:
-                # Insert into malaria_state_data table
                 try:
-                    self.cursor.execute('''
+                    self.cursor.execute(
+                        '''
                         INSERT INTO malaria_state_data 
                         (location_id, year, cases_examined, cases_detected, 
                          male_case_examined, female_case_examined, 
                          male_case_detected, female_case_detected)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (
-                        location_id,
-                        record.get('year', 0),
-                        record.get('cases_examined', 0),
-                        record.get('cases_detected', 0),
-                        record.get('male_case_examined', 0),
-                        record.get('female_case_examined', 0),
-                        record.get('male_case_detected', 0),
-                        record.get('female_case_detected', 0)
-                    ))
+                        ''',
+                        (
+                            location_id,
+                            record.get('year', 0),
+                            record.get('cases_examined', 0),
+                            record.get('cases_detected', 0),
+                            record.get('male_case_examined', 0),
+                            record.get('female_case_examined', 0),
+                            record.get('male_case_detected', 0),
+                            record.get('female_case_detected', 0)
+                        )
+                    )
                 except sqlite3.IntegrityError:
-                    # Skip duplicate entries
-                    pass
-        
+                    print(f"Duplicate entry found: {record}")
+
         self.conn.commit()
-        print(f"✓ Data loaded successfully")
+        print(f"Counter: {counter} Data loaded successfully")
         
     def add_default_users(self):
-        """Add default admin user to user_mapping table"""
+        """Add default admin user to user table"""
         try:
             # Check if admin user already exists
-            self.cursor.execute('SELECT * FROM user_mapping WHERE username = ?', ('admin',))
+            self.cursor.execute('SELECT * FROM users WHERE username = ?', ('admin',))
             existing_admin = self.cursor.fetchone()
-            
             if not existing_admin:
+                location_id = self.verify_location('Gorakhpur', 'Uttar Pradesh')
                 self.cursor.execute('''
-                    INSERT INTO user_mapping (username, password, role)
-                    VALUES (?, ?, ?)
-                ''', ('admin', 'admin123', 'ASHA'))
+                    INSERT INTO users (first_name, last_name, username, password, district, state, location_id, role)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ''', ('Bhuwan','Thada','bhuwan','bt12345','Gorakhpur', 'Uttar Pradesh', location_id,'ASHA'))
                 self.conn.commit()
-                print("✓ Default admin user added: username=admin, password=admin123, role=ASHA")
+                print("✓ Default user added: username=Bhuwan, role=ASHA")
+                location_id = self.verify_location('Gorakhpur', 'Uttar Pradesh')
+                self.cursor.execute('''
+                                    INSERT INTO users (first_name, last_name, username, password, district, state, location_id, role)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                ''', (
+                'Shyam', 'Mishra', 'shyam', 'shyam12345', 'Gorakhpur', 'Uttar Pradesh', location_id, 'DCMO'))
+                self.conn.commit()
+                print("✓ Default user added: username=Shyam, role=DCMO")
+                location_id = self.verify_location('Gorakhpur', 'Uttar Pradesh')
+                self.cursor.execute('''INSERT INTO users (first_name, last_name, username, password, district, state, location_id, role)
+                                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                                ''', (
+                    'Amit', 'Gupta', 'amit', 'amit12345', 'Gorakhpur', 'Uttar Pradesh', location_id, 'SCMO'))
+                self.conn.commit()
+                print("✓ Default user added: username=Amit, role=SCMO")
+
             else:
-                print("✓ Admin user already exists in user_mapping table")
+                print("✓ Default user already exists in users table")
         except sqlite3.IntegrityError as e:
             print(f"⚠️ Admin user already exists: {str(e)}")
         

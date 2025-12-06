@@ -277,7 +277,7 @@
   {
     "year": 2024,
     "state": "West Bengal",
-    "district": "Basirhat HD#",
+    "district": "Basirhat HD",
     "cases_examined": 355629,
     "cases_detected": 413,
     "male_case_examined": 188878,
@@ -299,7 +299,7 @@
   {
     "year": 2024,
     "state": "West Bengal",
-    "district": "Bisnupur HD#",
+    "district": "Bisnupur HD",
     "cases_examined": 216595,
     "cases_detected": 29,
     "male_case_examined": 107828,
@@ -453,7 +453,7 @@
   {
     "year": 2024,
     "state": "West Bengal",
-    "district": "Nandigram HD#",
+    "district": "Nandigram HD",
     "cases_examined": 252805,
     "cases_detected": 30,
     "male_case_examined": 124366,
@@ -882,7 +882,7 @@
   {
     "year": 2023,
     "state": "West Bengal",
-    "district": "Basirhat HD#",
+    "district": "Basirhat HD",
     "cases_examined": 340000,
     "cases_detected": 480,
     "male_case_examined": 177150,
@@ -904,7 +904,7 @@
   {
     "year": 2023,
     "state": "West Bengal",
-    "district": "Bisnupur HD#",
+    "district": "Bisnupur HD",
     "cases_examined": 200000,
     "cases_detected": 35,
     "male_case_examined": 113349,
@@ -1058,7 +1058,7 @@
   {
     "year": 2023,
     "state": "West Bengal",
-    "district": "Nandigram HD#",
+    "district": "Nandigram HD",
     "cases_examined": 240000,
     "cases_detected": 35,
     "male_case_examined": 124315,
@@ -1487,7 +1487,7 @@
   {
     "year": 2022,
     "state": "West Bengal",
-    "district": "Basirhat HD#",
+    "district": "Basirhat HD",
     "cases_examined": 320000,
     "cases_detected": 550,
     "male_case_examined": 148550,
@@ -1509,7 +1509,7 @@
   {
     "year": 2022,
     "state": "West Bengal",
-    "district": "Bisnupur HD#",
+    "district": "Bisnupur HD",
     "cases_examined": 180000,
     "cases_detected": 40,
     "male_case_examined": 90626,
@@ -1662,7 +1662,7 @@
   },
   {
     "year": 2022,
-    "district": "Nandigram HD#",
+    "district": "Nandigram HD",
     "cases_examined": 220000,
     "cases_detected": 40,
     "male_case_examined": 125266,
@@ -2091,7 +2091,7 @@
   {
     "year": 2021,
     "state": "West Bengal",
-    "district": "Basirhat HD#",
+    "district": "Basirhat HD",
     "cases_examined": 290000,
     "cases_detected": 450,
     "male_case_examined": 143564,
@@ -2113,7 +2113,7 @@
   {
     "year": 2021,
     "state": "West Bengal",
-    "district": "Bisnupur HD#",
+    "district": "Bisnupur HD",
     "cases_examined": 165000,
     "cases_detected": 32,
     "male_case_examined": 70213,
@@ -2267,7 +2267,7 @@
   {
     "year": 2021,
     "state": "West Bengal",
-    "district": "Nandigram HD#",
+    "district": "Nandigram HD",
     "cases_examined": 205000,
     "cases_detected": 33,
     "male_case_examined": 94451,
@@ -2696,7 +2696,7 @@
   {
     "year": 2020,
     "state": "West Bengal",
-    "district": "Basirhat HD#",
+    "district": "Basirhat HD",
     "cases_examined": 330000,
     "cases_detected": 520,
     "male_case_examined": 137789,
@@ -2718,7 +2718,7 @@
   {
     "year": 2020,
     "state": "West Bengal",
-    "district": "Bisnupur HD#",
+    "district": "Bisnupur HD",
     "cases_examined": 195000,
     "cases_detected": 37,
     "male_case_examined": 99972,
@@ -2872,7 +2872,7 @@
   {
     "year": 2020,
     "state": "West Bengal",
-    "district": "Nandigram HD#",
+    "district": "Nandigram HD",
     "cases_examined": 235000,
     "cases_detected": 38,
     "male_case_examined": 126988,
@@ -3301,7 +3301,7 @@
   {
     "year": 2019,
     "state": "West Bengal",
-    "district": "Basirhat HD#",
+    "district": "Basirhat HD",
     "cases_examined": 600000,
     "cases_detected": 940,
     "male_case_examined": 273026,
@@ -3323,7 +3323,7 @@
   {
     "year": 2019,
     "state": "West Bengal",
-    "district": "Bisnupur HD#",
+    "district": "Bisnupur HD",
     "cases_examined": 355000,
     "cases_detected": 68,
     "male_case_examined": 196811,
@@ -3477,7 +3477,7 @@
   {
     "year": 2019,
     "state": "West Bengal",
-    "district": "Nandigram HD#",
+    "district": "Nandigram HD",
     "cases_examined": 425000,
     "cases_detected": 69,
     "male_case_examined": 211782,

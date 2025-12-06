@@ -60,6 +60,43 @@ class LLMService:
                 "message": f"Error generating forecast: {str(e)}",
                 "forecast": None
             }
+
+    def generate_outbreak_forecast_number(self, district_data: Dict) -> Dict:
+        """
+        Generate outbreak forecast using LLM
+
+        Args:
+            district_data: Dictionary containing malaria data from database
+
+        Returns:
+            Forecast data in JSON format
+        """
+        if not district_data or 'years' not in district_data or len(district_data['years']) == 0:
+            return {
+                "status": "no_outbreak_observed",
+                "message": "No outbreak detected in this district. Maintain awareness of a healthy lifestyle.",
+                "forecast": None
+            }
+
+        # Prepare the prompt for LLM
+        prompt = self._prepare_prompt_numbers(district_data)
+
+        try:
+            # Call Groq LLM
+            response = self.llm.invoke([HumanMessage(content=prompt)])
+            response_text = response.content
+
+            # Parse the response
+            forecast_data = self._parse_response(response_text, district_data)
+            return forecast_data
+
+        except Exception as e:
+            print(f"Error calling Groq LLM: {str(e)}")
+            return {
+                "status": "error",
+                "message": f"Error generating forecast: {str(e)}",
+                "forecast": None
+            }
     
     def generate_response(self, prompt: str) -> str:
         """
@@ -128,7 +165,54 @@ Based on this data, provide a malaria outbreak forecast in JSON format with the 
 IMPORTANT: Return ONLY valid JSON, no additional text. The total_expected_cases should be based on the trend analysis.
 """
         return prompt
-    
+
+    def _prepare_prompt_numbers(self, district_data: Dict) -> str:
+            """Prepare prompt for LLM"""
+            state = district_data.get('state', 'Unknown')
+            district = district_data.get('district', 'Unknown')
+
+            # Get the latest year data
+            latest_data = district_data['years'][0] if district_data['years'] else {}
+
+            prompt = f"""
+    Analyze the following malaria data for {district}, {state} and provide a forecast:
+
+    District: {district}
+    State: {state}
+    Latest Data:
+    - Total Cases Examined: {latest_data.get('cases_examined', 0)}
+    - Total Cases Detected: {latest_data.get('cases_detected', 0)}
+    - Male Cases Detected: {latest_data.get('male_case_detected', 0)}
+    - Female Cases Detected: {latest_data.get('female_case_detected', 0)}
+    - Year: {latest_data.get('year', 'Unknown')}
+
+    Historical Data (last 3-4 years):
+    """
+
+            for year_data in district_data['years'][:4]:
+                prompt += f"\nYear {year_data['year']}: {year_data['cases_detected']} cases detected (Male: {year_data['male_case_detected']}, Female: {year_data['female_case_detected']})"
+
+            prompt += """
+
+    Based on this data, provide a malaria outbreak forecast in JSON format with the following structure:
+    {
+        "outbreak_status": "high_risk" | "moderate_risk" | "low_risk",
+        "disease_name": "Malaria",
+        "forecast_by_gender": {
+            "male": <number>,
+            "female": <number>
+        },
+        "forecast_by_age_group": {
+            "children_0_5": <number>,
+            "youth_5_18": <number>,
+            "adults_18_60": <number>,
+            "elderly_60_plus": <number>
+        },
+        "total_expected_cases": <number>,
+    }
+    IMPORTANT: Return ONLY valid JSON, no additional text. The total_expected_cases should be based on the trend analysis.
+    """
+            return prompt
     def _parse_response(self, response_text: str, district_data: Dict) -> Dict:
         """Parse LLM response"""
         try:
