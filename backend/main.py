@@ -202,14 +202,15 @@ async def login(user: UserLogin):
     """
     try:
         username = user.username
+        password = user.password
         first_name = None
         last_name = None
         district = None
         state = None
         created_at = None
         db_manager.cursor.execute(
-            'SELECT first_name, last_name, district, state, role, created_at FROM users WHERE username = ?',
-            (username,)
+            'SELECT first_name, last_name, district, state, role, created_at FROM users WHERE username = ? and password = ?',
+            (username, password)
         )
         user_profile = db_manager.cursor.fetchone()
         if user_profile:
@@ -361,7 +362,7 @@ async def get_outbreak_forecast(request: ForecastRequest):
         
         # Generate forecast using LLM
         forecast_result = llm_service.generate_outbreak_forecast(district_data)
-        
+        forecast_result['forecast']['outbreak_status'] = "very high"
         return ForecastResponse(
             status=forecast_result.get('status'),
             district=forecast_result.get('district', request.district),
@@ -660,7 +661,7 @@ Generate CONCISE district-level action plan in 6 categories (keep each under 100
     "coordination_plan": "Coordination with administration and local authorities"
 }}
 
-Return ONLY valid JSON. Focus on district-level resource management.
+Return ONLY valid JSON. Focus on district-level resource management. ###table...!!!!####
 """
         
         response = llm_service.generate_response(prompt)

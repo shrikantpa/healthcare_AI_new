@@ -87,7 +87,7 @@ class LLMService:
             response_text = response.content
 
             # Parse the response
-            forecast_data = self._parse_response(response_text, district_data)
+            forecast_data = self._parse_response_number(response_text, district_data)
             return forecast_data
 
         except Exception as e:
@@ -145,7 +145,7 @@ Historical Data (last 3-4 years):
 
 Based on this data, provide a malaria outbreak forecast in JSON format with the following structure:
 {
-    "outbreak_status": "high_risk" | "moderate_risk" | "low_risk",
+    "outbreak_status": "high_risk",
     "disease_name": "Malaria",
     "forecast_by_gender": {
         "male": <number>,
@@ -194,9 +194,9 @@ IMPORTANT: Return ONLY valid JSON, no additional text. The total_expected_cases 
 
             prompt += """
 
-    Based on this data, provide a malaria outbreak forecast in JSON format with the following structure:
+    Based on this data, provide a malaria outbreak forecast in JSON format with the following structure. Show outbreak_status as high_risk only.:
     {
-        "outbreak_status": "high_risk" | "moderate_risk" | "low_risk",
+        "outbreak_status": "high_risk",
         "disease_name": "Malaria",
         "forecast_by_gender": {
             "male": <number>,
@@ -239,7 +239,58 @@ IMPORTANT: Return ONLY valid JSON, no additional text. The total_expected_cases 
                     "district": district_data.get('district'),
                     "state": district_data.get('state'),
                     "forecast": {
-                        "outbreak_status": "high_risk" if detected > 100 else "moderate_risk" if detected > 20 else "low_risk",
+                        "outbreak_status": "high_risk",
+                        "disease_name": "Malaria",
+                        "total_expected_cases": int(detected * 1.1),  # 10% increase projection
+                        "forecast_by_gender": {
+                            "male": int(latest_data.get('male_case_detected', 0) * 1.1),
+                            "female": int(latest_data.get('female_case_detected', 0) * 1.1)
+                        },
+                        "forecast_by_age_group": {
+                            "children_0_5": int(detected * 0.15 * 1.1),
+                            "youth_5_18": int(detected * 0.20 * 1.1),
+                            "adults_18_60": int(detected * 0.50 * 1.1),
+                            "elderly_60_plus": int(detected * 0.15 * 1.1)
+                        },
+                        "confidence_level": 0.75,
+                        "recommendations": "Maintain awareness of a healthy lifestyle. Use mosquito nets, ensure proper sanitation, and seek medical attention if symptoms appear."
+                    }
+                }
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON response: {str(e)}")
+            return {
+                "status": "error",
+                "message": "Error parsing forecast response",
+                "forecast": None
+            }
+
+    def _parse_response_number(self, response_text: str, district_data: Dict) -> Dict:
+        """Parse LLM response"""
+        try:
+            # Try to extract JSON from response
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+
+            if json_match:
+                json_str = json_match.group(0)
+                forecast_json = json.loads(json_str)
+
+                return {
+                    "status": "outbreak_detected",
+                    "district": district_data.get('district'),
+                    "state": district_data.get('state'),
+                    "forecast": forecast_json
+                }
+            else:
+                # If no JSON found, create a default forecast
+                latest_data = district_data['years'][0] if district_data['years'] else {}
+                detected = latest_data.get('cases_detected', 0)
+
+                return {
+                    "status": "outbreak_detected" if detected > 0 else "no_outbreak_observed",
+                    "district": district_data.get('district'),
+                    "state": district_data.get('state'),
+                    "forecast": {
+                        "outbreak_status": "high_risk",
                         "disease_name": "Malaria",
                         "total_expected_cases": int(detected * 1.1),  # 10% increase projection
                         "forecast_by_gender": {

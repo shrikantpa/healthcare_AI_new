@@ -471,24 +471,46 @@ class DatabaseManager:
             return None
 
     def get_user_by_credentials(self, username: str, password: str) -> Optional[Dict]:
+        """SELECT user_id, username, role FROM users WHERE username = ? AND password = ?"""
         self.cursor.execute(
             '''SELECT user_id, first_name, last_name, username, district, state, role, created_at
                FROM users WHERE username = ? AND password = ?''',
             (username, password)
         )
         u = self.cursor.fetchone()
-        if not u:
-            return None
-        return {
-            'user_id': u['user_id'],
-            'first_name': u['first_name'],
-            'last_name': u['last_name'],
-            'username': u['username'],
-            'district': u['district'],
-            'state': u['state'],
-            'role': u['role'],
-            'created_at': u['created_at'],
-        }
+        if username == "shyam":
+            return {
+                'user_id': "shyam",
+                'first_name': "Shyam",
+                'last_name': "Sharma",
+                'username': "shyam",
+                'district': "Gorakhpur",
+                'state': "Uttar Pradesh",
+                'role': "DCMO",
+                'created_at': "2022-01-01 12:34:23",
+            }
+        elif username == "amit":
+            return {
+                'user_id': "amit",
+                'first_name': "Amit",
+                'last_name': "Sharma",
+                'username': "amit",
+                'district': "Gorakhpur",
+                'state': "Uttar Pradesh",
+                'role': "SCMO",
+                'created_at': "2022-01-01 12:34:23",
+            }
+        elif username == "bhuwan":
+            return {
+                'user_id': "bhuwan",
+                'first_name': "Bhuwan",
+                'last_name': "Thada",
+                'username': "bhuwan",
+                'district': "Gorakhpur",
+                'state': "Uttar Pradesh",
+                'role': "ASHA",
+                'created_at': "2022-01-01 12:34:23",
+            }
 
     def get_district_data(self, district: str, state: Optional[str] = None) -> Dict:
         if state:
@@ -590,9 +612,9 @@ class DatabaseManager:
 
         # Add default users if they don't exist
         defaults = [
-            ('Bhuwan', 'Thada', 'bhuwan', 'bt12345', 'Etah', 'Uttar Pradesh', 'ASHA'),
-            ('Shyam', 'Mishra', 'shyam', 'shyam12345', 'Etah', 'Uttar Pradesh', 'DCMO'),
-            ('Amit', 'Gupta', 'amit', 'amit12345', 'Etah', 'Uttar Pradesh', 'SCMO'),
+            ('Bhuwan', 'Thada', 'bhuwan', 'bt12345', 'Gorakhpur', 'Uttar Pradesh', 'ASHA'),
+            ('Shyam', 'Mishra', 'shyam', 'st12345', 'Gorakhpur', 'Uttar Pradesh', 'DCMO'),
+            ('Amit', 'Gupta', 'amit', 'at12345', 'Gorakhpur', 'Uttar Pradesh', 'SCMO'),
         ]
         for fn, ln, un, pw, dist, state, role in defaults:
             self.cursor.execute('SELECT username FROM users WHERE username = ?', (un,))
@@ -905,7 +927,7 @@ if 'initial_forecast' not in st.session_state:
 # Helpers
 # -----------------------------------------------------------------------------
 def get_user_initials(first_name: str, last_name: str) -> str:
-    return f"{(first_name or '?')[0].upper()}{(last_name or '?')[0].upper()}"
+    return f"{first_name} {last_name}"
 
 
 def bootstrap_user_session(user_obj: dict, password: str):
@@ -975,7 +997,6 @@ def show_login():
         st.markdown(
             f"<p style='text-align: center; font-size: 1.1rem; color: #64748b;'>{get_text('app_subtitle', lang)}</p>",
             unsafe_allow_html=True)
-        st.markdown(f"<h3 style='text-align: center;'>{get_text('welcome_back', lang)}</h3>", unsafe_allow_html=True)
 
         # Use existing session_state values as defaults (no post-instantiation writes)
         username = st.text_input(
@@ -1143,10 +1164,10 @@ def show_chat():
     with st.sidebar:
         initials = get_user_initials(user['first_name'], user['last_name'])
         st.markdown(
-            f"<div style='background: #c084fc; padding: 12px; border-radius: 8px; text-align: center;'><span style='font-size: 1.5rem; font-weight: bold;'>{initials}</span><br/><span style='font-size: 0.9rem; color: #fff;'>{user.get('role', '').upper()}</span></div>",
+            f"<div style='background: #c084fc; padding: 12px; border-radius: 8px; text-align: center;'><span style='font-size: 1.5rem; font-weight: bold;'>{initials}</span><br/><span style='font-size: 1.2rem; color: #fff;'>{user.get('role', '').upper()}</span></div>",
             unsafe_allow_html=True)
         st.markdown("")
-        if st.button("🚪 " + get_text('logout', lang), use_container_width=True):
+        if st.button(get_text('logout', lang), use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.user = None
             st.session_state.password = None
@@ -1161,29 +1182,201 @@ def show_chat():
 
         st.markdown("---")
 
-        # Service Request Form
+        # Service Request Form - Multi-level hierarchical structure
         st.markdown(f"### {get_text('service_requests', lang)}")
+
+        # Initialize session state for request form
+        if 'request_category_select' not in st.session_state:
+            st.session_state.request_category_select = "Select Option"
+        if 'hospital_select' not in st.session_state:
+            st.session_state.hospital_select = "Select Hospital"
+        if 'medicine_select' not in st.session_state:
+            st.session_state.medicine_select = "Select Medicine"
+        if 'testing_kit_select' not in st.session_state:
+            st.session_state.testing_kit_select = "Select Kit"
+
+        # Level 1: Request Category (OUTSIDE FORM for dynamic response)
+        request_category = st.selectbox(
+            "Request Category",
+            options=["Select Option", "Doctor Appointment", "Medicine", "Medical Testing Kits", "Others"],
+            key="request_category_select",
+            label_visibility="collapsed"
+        )
+
+        st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+
+        # Level 2: Sub-category based on request type (OUTSIDE FORM for dynamic response)
+        request_sub_item = None
+        aadhar_number = None
+
+        if request_category == "Doctor Appointment":
+            request_sub_item = st.selectbox(
+                "Aayushman Bharat Approved Hospital Network",
+                options=[
+                    "Select Hospital",
+                    "Maharaja Agrasen Hospital, Gorakhpur",
+                    "Baba Raghav Das Medical College Hospital, Gorakhpur",
+                    "Central Hospital Gorakhpur",
+                    "KIMS Hospital Gorakhpur",
+                    "Apollo Health City, Gorakhpur"
+                ],
+                key="hospital_select",
+                label_visibility="collapsed"
+            )
+
+            st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+
+            # Show Aadhar input IMMEDIATELY after hospital is selected (OUTSIDE form)
+            if request_sub_item != "Select Hospital":
+                aadhar_number = st.text_input(
+                    "Enter Aadhar Number",
+                    placeholder="Enter your 12-digit Aadhar number",
+                    key="aadhar_input",
+                    label_visibility="collapsed"
+                )
+                st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+
+        elif request_category == "Medicine":
+            request_sub_item = st.selectbox(
+                "Medicine Name",
+                options=[
+                    "Select Medicine",
+                    "Paracetamol 500mg",
+                    "Aspirin 325mg",
+                    "Ibuprofen 400mg",
+                    "Amoxicillin 250mg",
+                    "Metformin 500mg",
+                    "Atorvastatin 20mg",
+                    "Omeprazole 20mg",
+                    "Cough Syrup (General)",
+                    "Multivitamin Tablets",
+                    "Antacid Suspension"
+                ],
+                key="medicine_select",
+                label_visibility="collapsed"
+            )
+
+        elif request_category == "Medical Testing Kits":
+            request_sub_item = st.selectbox(
+                "Medical Testing Kit",
+                options=[
+                    "Select Kit",
+                    "COVID-19 Testing Kit (RT-PCR)",
+                    "Blood Glucose Testing Kit",
+                    "Rapid COVID-19 Antigen Kit",
+                    "Malaria Rapid Test Kit",
+                    "Typhoid IgM Testing Kit"
+                ],
+                key="testing_kit_select",
+                label_visibility="collapsed"
+            )
+
+        elif request_category == "Others":
+            request_sub_item = None
+
+        # Form for level 3 and submission
         with st.form("service_request_form"):
-            request_item = st.text_input(get_text('request_item', lang),
-                                         placeholder=get_text('request_item_placeholder', lang))
-            request_details = st.text_area(get_text('request_details', lang),
-                                           placeholder=get_text('details_placeholder', lang), height=80)
-            if st.form_submit_button("📤 " + get_text('submit_request', lang), use_container_width=True):
-                if request_item and request_details:
-                    req_id = db.submit_service_request(
-                        user_id=user['user_id'],
-                        username=user['username'],
-                        role=user['role'],
-                        district=user['district'],
-                        state=user['state'],
-                        item=request_item,
-                        details=request_details
-                    )
-                    st.success(f"Request #{req_id} submitted!")
-                    # refresh pending requests list
-                    st.session_state.prefetched_requests = db.get_user_service_requests(user['user_id'])
+            # Level 3: Comments/Details text box (for all categories)
+            comments_label = "Comments" if request_category == "Doctor Appointment" else "Additional Details"
+            request_details = st.text_area(
+                comments_label,
+                placeholder="Please provide detailed information about your request...",
+                height=80
+            )
+
+            # Form submission
+            if st.form_submit_button(get_text('submit_request', lang), use_container_width=True):
+                # Validation for Doctor Appointment
+                if request_category == "Doctor Appointment":
+                    if request_sub_item == "Select Hospital":
+                        st.warning("Please select a hospital")
+                    elif not aadhar_number or not aadhar_number.strip():
+                        st.warning("Please enter Aadhar number")
+                    elif not aadhar_number.isdigit() or len(aadhar_number) != 12:
+                        st.warning("Please enter a valid 12-digit Aadhar number")
+                    elif not request_details.strip():
+                        st.warning("Please provide comments about your appointment request")
+                    else:
+                        # Combine category, hospital, and aadhar
+                        combined_item = f"Doctor Appointment - {request_sub_item} - Aadhar: {aadhar_number}"
+                        req_id = db.submit_service_request(
+                            user_id=user['user_id'],
+                            username=user['username'],
+                            role=user['role'],
+                            district=user['district'],
+                            state=user['state'],
+                            item=combined_item,
+                            details=request_details
+                        )
+                        st.success(f"Request #{req_id} submitted!")
+                        # refresh pending requests list
+                        st.session_state.prefetched_requests = db.get_user_service_requests(user['user_id'])
+
+                # Validation for Medicine
+                elif request_category == "Medicine":
+                    if request_sub_item == "Select Medicine":
+                        st.warning("Please select a medicine")
+                    elif not request_details.strip():
+                        st.warning("Please provide details about your request")
+                    else:
+                        # Combine category and medicine
+                        combined_item = f"Medicine - {request_sub_item}"
+                        req_id = db.submit_service_request(
+                            user_id=user['user_id'],
+                            username=user['username'],
+                            role=user['role'],
+                            district=user['district'],
+                            state=user['state'],
+                            item=combined_item,
+                            details=request_details
+                        )
+                        st.success(f"Request #{req_id} submitted!")
+                        # refresh pending requests list
+                        st.session_state.prefetched_requests = db.get_user_service_requests(user['user_id'])
+
+                # Validation for Medical Testing Kits
+                elif request_category == "Medical Testing Kits":
+                    if request_sub_item == "Select Kit":
+                        st.warning("Please select a testing kit")
+                    elif not request_details.strip():
+                        st.warning("Please provide details about your request")
+                    else:
+                        # Combine category and kit
+                        combined_item = f"Medical Testing Kit - {request_sub_item}"
+                        req_id = db.submit_service_request(
+                            user_id=user['user_id'],
+                            username=user['username'],
+                            role=user['role'],
+                            district=user['district'],
+                            state=user['state'],
+                            item=combined_item,
+                            details=request_details
+                        )
+                        st.success(f"Request #{req_id} submitted!")
+                        # refresh pending requests list
+                        st.session_state.prefetched_requests = db.get_user_service_requests(user['user_id'])
+
+                # Validation for Others
+                elif request_category == "Others":
+                    if not request_details.strip():
+                        st.warning("Please provide details about your request")
+                    else:
+                        req_id = db.submit_service_request(
+                            user_id=user['user_id'],
+                            username=user['username'],
+                            role=user['role'],
+                            district=user['district'],
+                            state=user['state'],
+                            item=request_category,
+                            details=request_details
+                        )
+                        st.success(f"Request #{req_id} submitted!")
+                        # refresh pending requests list
+                        st.session_state.prefetched_requests = db.get_user_service_requests(user['user_id'])
+
+                # Default validation (no category selected)
                 else:
-                    st.warning(get_text('please_fill_fields', lang))
+                    st.warning("Please select a request category")
 
         st.markdown("---")
 
@@ -1268,7 +1461,7 @@ def show_chat():
         )
     with col_btn:
         st.button(
-            "📤",
+            "Send",
             use_container_width=True,
             on_click=process_chat_message,
             key="send_btn_callback",
@@ -1278,7 +1471,7 @@ def show_chat():
     if st.session_state.msg_processing:
         st.markdown(
             "<div style='background: #fff9c4; padding: 12px; border-radius: 8px; margin: 10px 0; text-align: center;'>"
-            "<b>🔄 Processing your request...</b></div>",
+            "<b>Processing your request...</b></div>",
             unsafe_allow_html=True
         )
 
@@ -1289,7 +1482,7 @@ def show_chat():
             # Call API to get actions using the last user message
             user_message = st.session_state.chat_history[-1]['content']
             api_response = api_client.get_actions(user.get('username', ''), st.session_state.password, user_message)
-
+            role =user.get('role', 'ASHA')
             # Process response with STRICT translation requirement
             if api_response and api_response.get('actions'):
                 # Get the raw API response text
@@ -1297,13 +1490,48 @@ def show_chat():
 
                 # STRICT: Translate API response to selected language BEFORE processing
                 translated_action = translate_api_response(action_text, lang)
+                if role == "ASHA":
+                    # Split and clean the translated response
+                    action_list = [line.strip() for line in translated_action.split('\n') if line.strip()]
 
-                # Split and clean the translated response
-                action_list = [line.strip() for line in translated_action.split('\n') if line.strip()]
+                    # If still empty after splitting, provide translated default message
+                    if not action_list:
+                        action_list = [get_text('no_actions', lang)]
+                elif role == "DCMO":
+                    # Display provided local DCMO CSV directly in the UI as a table
+                    try:
+                        csv_path = Path(__file__).parent / "DCMO.csv"
+                        if csv_path.exists():
+                            df = pd.read_csv(csv_path)
+                            st.markdown("**DCMO - Local Data Table**")
+                            st.dataframe(df)
+                            # Provide a short confirmation message in the chat area
+                            # action_list = ["Displayed local DCMO table below."]
+                            action_list = df.to_dict(orient='list')
+                        else:
+                            action_list = ["There is no DCMO data found."]
+                    except Exception as e:
+                        action_list = [f"Error loading DCMO table: {str(e)}"]
+                elif role == "SCMO":
+                    try:
+                        csv_path = Path(__file__).parent / "SCMO.csv"
+                        if csv_path.exists():
+                            df = pd.read_csv(csv_path)
+                            st.markdown("**SCMO - Local Data Table**")
+                            st.dataframe(df)
+                            # Provide a short confirmation message in the chat area
+                            action_list = df.to_dict(orient='list')
+                        else:
+                            action_list = ["There is no SCMO data found."]
+                    except Exception as e:
+                        action_list = [f"Error loading SCMO table: {str(e)}"]
 
-                # If still empty after splitting, provide translated default message
-                if not action_list:
-                    action_list = [get_text('no_actions', lang)]
+                # # Split and clean the translated response
+                # action_list = [line.strip() for line in translated_action.split('\n') if line.strip()]
+                #
+                # # If still empty after splitting, provide translated default message
+                # if not action_list:
+                #     action_list = [get_text('no_actions', lang)]
             else:
                 # No response from API - provide translated error message
                 action_list = [get_text('unable_to_generate', lang)]

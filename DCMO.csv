@@ -1,0 +1,8 @@
+Town/Village,Population,Malaria Cases,Severity,Recommended Actions
+Bansgaon,12000,45,Highly Infected,"Immediate IRS spraying, medical camps, larval control"
+Khajni,15000,60,Highly Infected,"Emergency response team deployment, fogging operations"
+Sahjanwa,10000,30,Highly Infected,"Rapid diagnostic testing, distribution of mosquito nets"
+Campierganj,5000,18,Moderately Infected,"Source reduction, health awareness drive"
+Gola,4000,10,Moderately Infected,"Active fever surveillance, community engagement"
+ChauriChaura,3000,0,Not Infected,Routine surveillance
+Sadar,2500,0,Not Infected,Preventive monitoring

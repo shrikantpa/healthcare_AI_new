@@ -188,19 +188,19 @@ class DatabaseManager:
                 ''', ('Bhuwan','Thada','bhuwan','bt12345','Gorakhpur', 'Uttar Pradesh', location_id,'ASHA'))
                 self.conn.commit()
                 print("✓ Default user added: username=Bhuwan, role=ASHA")
-                location_id = self.verify_location('Gorakhpur', 'Uttar Pradesh')
-                self.cursor.execute('''
-                                    INSERT INTO users (first_name, last_name, username, password, district, state, location_id, role)
-                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                                ''', (
-                'Shyam', 'Mishra', 'shyam', 'shyam12345', 'Gorakhpur', 'Uttar Pradesh', location_id, 'DCMO'))
-                self.conn.commit()
-                print("✓ Default user added: username=Shyam, role=DCMO")
-                location_id = self.verify_location('Gorakhpur', 'Uttar Pradesh')
-                self.cursor.execute('''INSERT INTO users (first_name, last_name, username, password, district, state, location_id, role)
-                                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                                                ''', (
-                    'Amit', 'Gupta', 'amit', 'amit12345', 'Gorakhpur', 'Uttar Pradesh', location_id, 'SCMO'))
+                # location_id = self.verify_location('Gorakhpur', 'Uttar Pradesh')
+                # self.cursor.execute('''
+                #                     INSERT INTO users (first_name, last_name, username, password, district, state, location_id, role)
+                #                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                #                 ''', (
+                # 'Shyam', 'Mishra', 'shyam', 'shyam12345', 'Gorakhpur', 'Uttar Pradesh', location_id, 'DCMO'))
+                # self.conn.commit()
+                # print("✓ Default user added: username=Shyam, role=DCMO")
+                # location_id = self.verify_location('Gorakhpur', 'Uttar Pradesh')
+                # self.cursor.execute('''INSERT INTO users (first_name, last_name, username, password, district, state, location_id, role)
+                #                                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                #                                 ''', (
+                #     'Amit', 'Gupta', 'amit', 'amit12345', 'Gorakhpur', 'Uttar Pradesh', location_id, 'SCMO'))
                 self.conn.commit()
                 print("✓ Default user added: username=Amit, role=SCMO")
 
